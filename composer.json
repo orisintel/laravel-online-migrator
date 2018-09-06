@@ -1,0 +1,57 @@
+{
+    "name": "orisintel/laravel-online-migrator",
+    "description": "Apply Laravel's database migrations with minimal disruptions using tools like Percona Online Schema Change",
+    "keywords": [
+        "orisintel",
+        "laravel-online-migrator",
+        "laravel",
+        "migration"
+    ],
+    "homepage": "https://github.com/orisintel/laravel-online-migrator",
+    "license": "MIT",
+    "authors": [
+    {
+        "name": "Paul R. Rogers",
+        "role": "Developer"
+    },
+    {
+        "name": "ORIS Intelligence",
+        "email": "info@orisintel.com",
+        "homepage": "https://orisintel.com",
+        "role": "Organization"
+    }
+    ],
+    "require": {
+        "php": "^7.1",
+        "laravel/framework": "^5.6"
+    },
+    "require-dev": {
+        "larapack/dd": "^1.0",
+        "phpunit/phpunit": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "OrisIntel\\OnlineMigrator\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OrisIntel\\OnlineMigrator\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "OrisIntel\\OnlineMigrator\\OnlineMigratorServiceProvider"
+            ]
+        }
+    }
+}
