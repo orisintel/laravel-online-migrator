@@ -2,7 +2,6 @@
 
 namespace OrisIntel\OnlineMigrator;
 
-use OrisIntel\OnlineMigrator\OnlineMigrator;
 use Illuminate\Database\MigrationServiceProvider;
 
 class OnlineMigratorServiceProvider extends MigrationServiceProvider

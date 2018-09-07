@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class OnlineMigrator extends Migrator
 {
-    private $output = null; // CONSIDER: Getting from provider
+    protected $output; // CONSIDER: Getting from provider
 
     private function getOutput()
     {
@@ -91,8 +91,8 @@ class OnlineMigrator extends Migrator
             // '__' if already starts with '_' (quirk in PTOSC).
 
             $ptosc_defaults = [
-                // NOTE: Use --no-... variation if all are known to be unique.
-                '--check-unique-key-change',
+                // ASSUMES: All are known to be unique.
+                '--no-check-unique-key-change',
                 '--alter-foreign-keys-method=auto',
             ];
             $ptosc_options_str = self::getOptionsFromEnvForShell(
@@ -112,7 +112,8 @@ class OnlineMigrator extends Migrator
                 // CONSIDER: Redacting password during pretend
                 . ' --password ' . escapeshellarg($db_config['password'])
                 . $ptosc_options_str
-                . ' --execute';
+                . ' --execute'
+                . ' 2>&1';
         }
 
         return $query_or_command_str;
