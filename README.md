@@ -14,6 +14,13 @@ You can install the package via composer:
 composer require orisintel/laravel-online-migrator
 ```
 
+The `pt-online-schema-change` command from Percona's toolkit must be in the path
+where migrations will be applied or rolled back.
+
+### Configuration
+
+TODO:
+
 ## Usage
 
 Run Artisan's migrate to apply migrations online*.
@@ -24,7 +31,7 @@ php artisan migrate
 
 Add PTOSC options using environment variables:
 ``` bash
-PTOSC_OPTIONS='--no-check-unique-key-change'  \
+PTOSC_OPTIONS='--check-unique-key-change'  \
   php artisan migrate
 ```
 
@@ -54,6 +61,10 @@ class MyMigration extends Migration
 ``` bash
 composer test
 ```
+
+Output is verbose because `passthru` is used to help debug production problems.
+Executing as `phpunit --testdox` may be more readable until the verbosity can be
+tamed.
 
 ### Changelog
 
