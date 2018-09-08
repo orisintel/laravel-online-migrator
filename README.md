@@ -19,7 +19,12 @@ where migrations will be applied or rolled back.
 
 ### Configuration
 
-TODO:
+Add provider to `config/app.php`:
+``` php
+'providers' => [
+    // ...
+    OrisIntel\OnlineMigrator\OnlineMigratorServiceProvider::class,
+```
 
 ## Usage
 
@@ -39,7 +44,7 @@ Flag migrations known to be incompatible with this tool using the built-in trait
 ``` php
 class MyMigration extends Migration
 {
-    use \OrisIntel\OnlineMigrator\OnlineIncompatible
+    use \OrisIntel\OnlineMigrator\Trait\OnlineIncompatible
 ```
 
 ### Limitations
