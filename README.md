@@ -71,11 +71,6 @@ Output is verbose because `passthru` is used to help debug production problems.
 Executing as `phpunit --testdox` may be more readable until the verbosity can be
 tamed.
 
-### Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed
-recently.
-
 ### Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
