@@ -38,6 +38,11 @@ php artisan migrate
 ```
 \*Limitations are documented below.
 
+Preview what changes it would make.
+``` bash
+php artisan migrate --pretend
+```
+
 Add PTOSC options using environment variables:
 ``` bash
 PTOSC_OPTIONS='--check-unique-key-change'  \

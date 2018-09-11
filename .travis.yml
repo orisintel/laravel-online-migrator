@@ -24,7 +24,7 @@ before_script:
 - sudo apt-get install -y percona-toolkit
 
 script:
-- vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover --configuration phpunit.xml.travis
+- vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover --configuration phpunit.xml.travis --testdox
 
 after_script:
 - php vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
