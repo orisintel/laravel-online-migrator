@@ -1,10 +1,10 @@
 # Laravel Online Migrator
 
 This package minimizes disruptions when applying Laravel's database migrations
-using tools like Percona Online Schema Change. For example, one can write
-(mostly) standard Laravel migration files then run "php artisan migrate".
-Database changes will be automatically automatically converted into PTOSC
-commands.
+using tools like [Percona Online Schema Change](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html).
+For example, one can write (mostly) standard Laravel migration files then run
+"php artisan migrate". Database changes will be automatically automatically
+converted into PTOSC commands.
 
 ## Installation
 
