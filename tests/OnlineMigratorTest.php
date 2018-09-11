@@ -26,4 +26,13 @@ class OnlineMigratorTest extends TestCase
         $this->expectExceptionCode(23000);
         \DB::table('test_om')->insert(['name' => 'one']);
     }
+
+    public function test_migrate_createsTableWithPrimary()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-table-with-primary');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionCode(23000);
+        \DB::table('test_om_with_primary')->insert(['name' => 'alice']);
+    }
 }
