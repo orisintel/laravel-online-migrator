@@ -1,5 +1,9 @@
 # Laravel Online Migrator
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/orisintel/laravel-online-migrator.svg?style=flat-square)](https://packagist.org/packages/orisintel/laravel-online-migrator)
+[![Build Status](https://img.shields.io/travis/orisintel/laravel-online-migrator/master.svg?style=flat-square)](https://travis-ci.org/orisintel/laravel-online-migrator)
+[![Total Downloads](https://img.shields.io/packagist/dt/orisintel/laravel-online-migrator.svg?style=flat-square)](https://packagist.org/packages/orisintel/laravel-online-migrator)
+
 This package minimizes disruptions when applying Laravel's database migrations
 using tools like [Percona Online Schema Change](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html).
 For example, one can write (mostly) standard Laravel migration files then run
