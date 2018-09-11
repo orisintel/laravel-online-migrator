@@ -37,6 +37,27 @@ class OnlineMigratorTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-without-default');
     }
 
+    public function test_migrate_createsFkWithIndex()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-fk-with-index');
+
+        $show_create_sql = str_replace('`', '',
+            array_last(
+                \DB::select('show create table test_om_fk_with_index')
+            )->{"Create Table"}
+        );
+
+        // PTOSC will duplicate where native does not because of differences in
+        // default naming and detection of existing indexes.
+        // Workaround in real migrations by moving FK(s) creation to its own
+        // Schema::table() call separate from column creation.
+        preg_match_all('~^\s+KEY\s+([^\s]+)~mu', $show_create_sql, $m);
+        $this->assertEquals([
+            'test_om_fk_with_index_test_om_id_foreign',
+            'test_om_fk_with_index_test_om_id_index',
+        ], $m[1]);
+    }
+
     public function test_migrate_createsTableWithPrimary()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-table-with-primary');

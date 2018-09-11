@@ -32,13 +32,13 @@ Add provider to `config/app.php`:
 
 ## Usage
 
-Run Artisan's migrate to apply migrations online*.
+Run Artisan's migrate to apply migrations online*:
 ``` bash
 php artisan migrate
 ```
 \*Limitations are documented below.
 
-Preview what changes it would make.
+Preview what changes it would make:
 ``` bash
 php artisan migrate --pretend
 ```
@@ -55,11 +55,29 @@ class MyMigration extends Migration
     use \OrisIntel\OnlineMigrator\Trait\OnlineIncompatible
 ```
 
+Adding foreign key with index to existing table:
+``` php
+class MyColumnWithFkMigration extends Migration
+{
+    public function up()
+    {
+        Schema::table('my_table', function ($table) {
+            $table->integer('my_fk_id')->index();
+        });
+
+        Schema::table('my_table', function ($table) {
+            $table->foreign('my_fk_id')->references('id')->on('my_table2');
+```
+
 ### Limitations
 - Only supports Mysql, specifically those versions supported by PTOSC v3
 - Adding unique indexes may cause data loss unless tables are manually checked
   beforehand [because of how PTOSC works](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id7)
 - Adding not-null columns requires a default
+- Foreign key creation must be done separately from column creation or duplicate
+  indexes may be created with slightly different naming
+  - Close the `Schema::create()` call and make a separate `Schema::table()` call
+    for all FKs in the migration
 - Stateful migrations, like those selecting _then_ saving rows,
   will instead need to do one of the following:
   - Use non-selecting queries like `MyModel::where(...)->update(...)`
@@ -68,7 +86,6 @@ class MyMigration extends Migration
 - Migrations which need two stages, such as to avoid unintended back-filling of
   a new default, must be split into separate migration classes or else the query
   extraction will fail; much like "--pretend".
-
 
 ### Testing
 
