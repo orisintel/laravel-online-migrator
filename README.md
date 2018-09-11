@@ -59,6 +59,7 @@ class MyMigration extends Migration
 - Only supports Mysql, specifically those versions supported by PTOSC v3
 - Adding unique indexes may cause data loss unless tables are manually checked
   beforehand [because of how PTOSC works](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id7)
+- Adding not-null columns requires a default
 - Stateful migrations, like those selecting _then_ saving rows,
   will instead need to do one of the following:
   - Use non-selecting queries like `MyModel::where(...)->update(...)`

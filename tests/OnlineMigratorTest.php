@@ -27,6 +27,15 @@ class OnlineMigratorTest extends TestCase
         \DB::table('test_om')->insert(['name' => 'one']);
     }
 
+    public function test_migrate_addsWithoutDefault()
+    {
+        // Known to be unsupported by PTOSC (v3) for the time being, so this
+        // provides indirect proof that it's working through PTOSC.
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionCode(29);
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-without-default');
+    }
+
     public function test_migrate_createsTableWithPrimary()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-table-with-primary');

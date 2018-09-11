@@ -239,7 +239,8 @@ class OnlineMigrator extends Migrator
             if (0 !== $return_var) {
                 throw new \UnexpectedValueException('Exited with error code '
                     . var_export($return_var, 1) . ', command:' . PHP_EOL
-                    . $query['query']);
+                    . $query['query'],
+                    intval($return_var));
             }
         } else {
             // Run unchanged query
