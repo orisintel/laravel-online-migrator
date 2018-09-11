@@ -15,7 +15,7 @@ before_script:
 - mysql -e 'CREATE DATABASE test_om;'
 
 script:
-- vendor/bin/phpunit --coverage-html --coverage-clover=coverage.clover --configuration phpunit.xml.travis
+- vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover --configuration phpunit.xml.travis
 
 services:
 - mysql
