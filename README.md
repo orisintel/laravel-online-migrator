@@ -84,6 +84,7 @@ instead of using the issue tracker.
 
 - [Paul R. Rogers](https://github.com/paulrrogers)
 - [All Contributors](../../contributors)
+- [Percona Team](https://www.percona.com/about-percona/team) for `pt-online-schema-change`
 
 ## License
 
