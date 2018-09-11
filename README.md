@@ -57,7 +57,9 @@ class MyMigration extends Migration
 ```
 
 ### Limitations
-- Only supports Mysql, specifically versions supported by pt-online-schema-change
+- Only supports Mysql, specifically those versions supported by PTOSC v3
+- Adding unique indexes may cause data loss unless tables are manually checked
+  beforehand [because of how PTOSC works](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id7)
 - Creating tables requires primary keys defined in their own PHP statements like
   `$table->primary('my-id');`
 - Stateful migrations, like those selecting _then_ saving rows,

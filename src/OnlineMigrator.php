@@ -92,6 +92,8 @@ class OnlineMigrator extends Migrator
 
             $ptosc_defaults = [
                 // ASSUMES: All are known to be unique.
+                // CONSIDER: Extracting/re-creating automatic uniqueness checks
+                // and running them here in PHP beforehand.
                 '--no-check-unique-key-change',
                 '--alter-foreign-keys-method=auto',
             ];
