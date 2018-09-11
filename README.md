@@ -45,8 +45,7 @@ php artisan migrate --pretend
 
 Add PTOSC options using environment variables:
 ``` bash
-PTOSC_OPTIONS='--check-unique-key-change'  \
-  php artisan migrate
+PTOSC_OPTIONS='--recursion-method=none'  php artisan migrate
 ```
 
 Flag migrations known to be incompatible with this tool using the built-in trait:
