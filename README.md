@@ -23,7 +23,12 @@ where migrations will be applied or rolled back.
 
 ### Configuration
 
-Add provider to `config/app.php`:
+Publish the configuration file:
+``` bash
+php artisan vendor:publish --provider='OrisIntel\OnlineMigrator\OnlineMigratorServiceProvider'
+```
+
+If not using discovery then add the provider to `config/app.php`:
 ``` php
 'providers' => [
     // ...
