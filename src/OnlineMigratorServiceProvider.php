@@ -6,6 +6,22 @@ use Illuminate\Database\MigrationServiceProvider;
 
 class OnlineMigratorServiceProvider extends MigrationServiceProvider
 {
+    public function boot()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../config/online-migrator.php' => config_path('online-migrator.php'),
+            ], 'config');
+        }
+    }
+
+    public function register()
+    {
+        $this->mergeConfigFrom(__DIR__ . '/../config/online-migrator.php', 'online-migrator');
+
+        parent::register();
+    }
+
     /**
      * Register the migrator service.
      *

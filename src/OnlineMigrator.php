@@ -90,6 +90,8 @@ class OnlineMigrator extends Migrator
             // TODO: Fix dropping FKs by prefixing constraint name with '_' or
             // '__' if already starts with '_' (quirk in PTOSC).
 
+            // Keeping defaults here so overriding one does not discard all, as
+            // would happen if left to `config/online-migrator.php`.
             $ptosc_defaults = [
                 '--alter-foreign-keys-method=auto',
                 '--no-check-alter', // ASSUMES: Users accept risks w/RENAME.
@@ -98,8 +100,8 @@ class OnlineMigrator extends Migrator
                 // and running them here in PHP beforehand.
                 '--no-check-unique-key-change',
             ];
-            $ptosc_options_str = self::getOptionsFromEnvForShell(
-                'PTOSC_OPTIONS', $ptosc_defaults);
+            $ptosc_options_str = self::getOptionsForShell(
+                config('online-migrator.ptosc-options'), $ptosc_defaults);
 
             if (false !== strpos($ptosc_options_str, '--dry-run')) {
                 throw new \InvalidArgumentException(
@@ -127,16 +129,16 @@ class OnlineMigrator extends Migrator
      *
      * ASSUMES: Shell command(s) use '--no-' to invert options when checking for defaults.
      *
-     * @param $env_var_name
-     * @param array $defaults
+     * @param string $option_csv
+     * @param array  $defaults
      *
      * @return string
      */
-    private static function getOptionsFromEnvForShell($env_var_name, $defaults = [])
+    private static function getOptionsForShell(?string $option_csv, array $defaults = []) : string
     {
         $return = '';
 
-        $defaults_by_root = [];
+        $options = [];
         foreach ($defaults as $raw_default) { // CONSIDER: Accepting value
             if (false === strpos($raw_default, '--', 0)) {
                 throw new \InvalidArgumentException(
@@ -144,12 +146,14 @@ class OnlineMigrator extends Migrator
                     . var_export($raw_default, 1));
             }
             $default_root = preg_replace('/(^--(no-?)?|=.*)/', '', $raw_default);
-            $defaults_by_root[$default_root] = $raw_default;
+            $options[$default_root] = $raw_default;
         }
 
-        if (! empty(env($env_var_name))) {
+        if (! empty($option_csv)) {
+            // CONSIDER: Formatting CLI options in config as native arrays
+            // instead of CSV.
             // CONSIDER: Supporting commas embedded in option value like '--option="red,blue"'
-            $raw_options = explode(',', env($env_var_name));
+            $raw_options = explode(',', $option_csv);
             foreach ($raw_options as $raw_option) {
                 if (false === strpos($raw_option, '--', 0)) {
                     throw new \InvalidArgumentException(
@@ -157,12 +161,11 @@ class OnlineMigrator extends Migrator
                         . var_export($raw_option, 1));
                 }
                 $option_root = preg_replace('/^--(no-?|=.*)?/', '', $raw_option);
-                unset($defaults_by_root[$option_root]);
-                $return .= ' ' . $raw_option; // TODO: Escape
+                $options[$option_root] = $raw_option;
             }
         }
 
-        foreach ($defaults_by_root as $raw_default) {
+        foreach ($options as $raw_default) {
             $return .= ' ' . $raw_default; // TODO: Escape
         }
 
@@ -262,7 +265,7 @@ class OnlineMigrator extends Migrator
         $is_online_compatible = (empty($migration->onlineIncompatibleMethods)
             || ! in_array($method, $migration->onlineIncompatibleMethods));
 
-        $use_flag_specified = (0 < strlen(env('USE_ONLINE_MIGRATOR')));
+        $use_flag_specified = (0 < strlen(config('online-migrator.enabled')));
 
         // HACK: Work around slow and sometimes absent PTOSC by using original
         // queries when migrating "test" database(s).
@@ -270,7 +273,7 @@ class OnlineMigrator extends Migrator
         $is_test_database = (false !== stripos($db_name, 'test'));
 
         $is_appropriate =
-            ($use_flag_specified ? env('USE_ONLINE_MIGRATOR') : (false === $is_test_database))
+            ($use_flag_specified ? config('online-migrator.enabled') : (false === $is_test_database))
             && $is_online_compatible;
 
         return $is_appropriate;
