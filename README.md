@@ -85,6 +85,8 @@ class MyColumnWithFkMigration extends Migration
     duplicate indexes may be created with slightly different naming
     - Close the `Schema::create()` call and make a separate `Schema::table()`
       call for all FKs in the migration
+- With InnoDB Online DDL
+  - See the [MySQL Online DDL documentation](https://dev.mysql.com/doc/refman/5.6/en/innodb-create-index-overview.html).
 - Stateful migrations, like those selecting _then_ saving rows,
   will instead need to do one of the following:
   - Use non-selecting queries like `MyModel::where(...)->update(...)`

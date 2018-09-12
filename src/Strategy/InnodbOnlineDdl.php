@@ -6,6 +6,13 @@ use Illuminate\Database\Connection;
 
 class InnodbOnlineDdl implements StrategyInterface
 {
+    private const INPLACE_INCOMPATIBLE = [
+        'ALTER\s+TABLE\s+`?[^`\s]+`?\s+CHANGE', // CONSIDER: Only when type changes.
+        'CONVERT\s+TO\s+CHARACTER\s+SET',
+        'FOREIGN\s+KEY',
+        'DROP\s+PRIMARY\s+KEY',
+    ];
+
     /**
      * Get query or command, converting "ALTER TABLE " statements to on-line commands/queries.
      *
@@ -19,25 +26,27 @@ class InnodbOnlineDdl implements StrategyInterface
         $query_or_command_str = $query['query'];
 
         // CONSIDER: Checking whether InnoDB table (and using diff. strategy?).
-        $re = '/^\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/iu';
-        if (preg_match($re, $query_or_command_str)
-            // CONSIDER: Supporting FKs by setting foreign_key_checks=OFF or
-            // falling back to 'COPY'.
-            && ! preg_match('/\bFOREIGN\s+KEY\b/iu', $query_or_command_str)
-        ) {
+        $re = '/^\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/imu';
+        if (preg_match($re, $query_or_command_str)) {
             // CONSIDER: Making algorithm and lock configurable generally and
             // per migration.
             // CONSIDER: Falling back to 'COPY' if 'INPLACE' is stopped.
-            if (! preg_match('/\s*,\s*ALGORITHM\s*=/iu', $query_or_command_str)) {
-                // Converting character set must be a 'COPY'.
+            $algorithm = null;
+            // CONSIDER: Supporting FKs by setting foreign_key_checks=OFF
+            if (! preg_match('/\s*,\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $m)) {
+                // Some changes must be a 'COPY'.
                 $algorithm = preg_match(
-                    '/\bCONVERT\s+TO\s+CHARACTER\s+SET\b/iu',
+                    '/\b(' . implode('|', static::INPLACE_INCOMPATIBLE) . ')\b/iu',
                     $query_or_command_str
                 ) ? 'COPY' : 'INPLACE';
                 $query_or_command_str .= ', ALGORITHM=' . $algorithm;
+            } else {
+                $algorithm = strtoupper(trim($m[1]));
             }
+
             if (! preg_match('/\s*,\s*LOCK\s*=/iu', $query_or_command_str)) {
-                $query_or_command_str .= ', LOCK=NONE';
+                $lock = 'COPY' === $algorithm ? 'SHARED' : 'NONE';
+                $query_or_command_str .= ', LOCK=' . $lock;
             }
         }
 
