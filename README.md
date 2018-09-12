@@ -71,21 +71,21 @@ class MyColumnWithFkMigration extends Migration
 
 ### Limitations
 - Only supports Mysql, specifically those versions supported by PTOSC v3
-- Adding unique indexes may cause data loss unless tables are manually checked
-  beforehand [because of how PTOSC works](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id7)
-- Adding not-null columns requires a default
-- Foreign key creation must be done separately from column creation or duplicate
-  indexes may be created with slightly different naming
-  - Close the `Schema::create()` call and make a separate `Schema::table()` call
-    for all FKs in the migration
+- With PTOSC
+  - Adding unique indexes may cause data loss unless tables are manually checked
+    beforehand [because of how PTOSC works](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id7)
+  - Adding not-null columns [requires a default](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#cmdoption-pt-online-schema-change-alter)
+  - Renaming a column or dropping a primary key [have additional risks](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id1)
+  - Foreign key creation should be done separately from column creation or
+    duplicate indexes may be created with slightly different naming
+    - Close the `Schema::create()` call and make a separate `Schema::table()`
+      call for all FKs in the migration
 - Stateful migrations, like those selecting _then_ saving rows,
   will instead need to do one of the following:
   - Use non-selecting queries like `MyModel::where(...)->update(...)`
   - Pipe the raw SQL like `\DB::statement('UPDATE ... SET ... WHERE ...');`
-  - Use the OnlineMigratorIncompatible trait to mark the migration as incompatible
-- Migrations which need two stages, such as to avoid unintended back-filling of
-  a new default, must be split into separate migration classes or else the query
-  extraction will fail; much like "--pretend".
+  - Use the `OnlineMigratorIncompatible` trait to mark the migration as
+    incompatible
 
 ### Testing
 

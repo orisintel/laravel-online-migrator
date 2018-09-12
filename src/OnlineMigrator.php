@@ -91,11 +91,12 @@ class OnlineMigrator extends Migrator
             // '__' if already starts with '_' (quirk in PTOSC).
 
             $ptosc_defaults = [
+                '--alter-foreign-keys-method=auto',
+                '--no-check-alter', // ASSUMES: Users accept risks w/RENAME.
                 // ASSUMES: All are known to be unique.
                 // CONSIDER: Extracting/re-creating automatic uniqueness checks
                 // and running them here in PHP beforehand.
                 '--no-check-unique-key-change',
-                '--alter-foreign-keys-method=auto',
             ];
             $ptosc_options_str = self::getOptionsFromEnvForShell(
                 'PTOSC_OPTIONS', $ptosc_defaults);
