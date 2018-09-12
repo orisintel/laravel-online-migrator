@@ -10,7 +10,7 @@ class InnodbOnlineDdl implements StrategyInterface
         'ALTER\s+TABLE\s+`?[^`\s]+`?\s+CHANGE', // CONSIDER: Only when type changes.
         'CONVERT\s+TO\s+CHARACTER\s+SET',
         'FOREIGN\s+KEY',
-        'DROP\s+PRIMARY\s+KEY',
+        'DROP\s+PRIMARY\s+KEY(?!,\s*ADD\s+PRIMARY\s+KEY)',
     ];
 
     /**
@@ -63,7 +63,7 @@ class InnodbOnlineDdl implements StrategyInterface
      *
      * @return void
      */
-    public static function runQueryOrCommand(array &$query, Connection &$connection)
+    public static function runQueryOrCommand(array &$query, Connection $connection)
     {
         // Always run unchanged query since this strategy does not need to
         // execute commands of other tools.

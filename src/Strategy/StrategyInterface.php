@@ -26,5 +26,5 @@ interface StrategyInterface
      *
      * @return void
      */
-    public static function runQueryOrCommand(array &$query, Connection &$connection);
+    public static function runQueryOrCommand(array &$query, Connection $connection);
 }

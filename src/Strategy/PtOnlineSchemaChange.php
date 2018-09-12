@@ -132,7 +132,7 @@ class PtOnlineSchemaChange implements StrategyInterface
      *
      * @return void
      */
-    public static function runQueryOrCommand(array &$query, Connection &$connection)
+    public static function runQueryOrCommand(array &$query, Connection $connection)
     {
         // CONSIDER: Using unmodified migration code when small and not
         // currently locked table.

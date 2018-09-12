@@ -2,6 +2,8 @@
 
 namespace OrisIntel\OnlineMigrator\Tests;
 
+use OrisIntel\OnlineMigrator\Strategy\InnodbOnlineDdl;
+
 class InnodbOnlineDdlTest extends TestCase
 {
     public function setUp() : void
@@ -82,5 +84,27 @@ class InnodbOnlineDdlTest extends TestCase
         $this->expectException(\PDOException::class);
         $this->expectExceptionCode(23000);
         \DB::table('test_om_with_primary')->insert(['name' => 'alice']);
+    }
+
+    public function test_getQueryOrCommand_algorithmCopyWhenDropPk()
+    {
+        $query = [
+            'query' => 'ALTER TABLE test DROP PRIMARY KEY',
+        ];
+        $this->assertStringEndsWith(
+            ', ALGORITHM=COPY, LOCK=SHARED',
+            InnodbOnlineDdl::getQueryOrCommand($query, [])
+        );
+    }
+
+    public function test_getQueryOrCommand_algorithmInplaceWhenDropAddPk()
+    {
+        $query = [
+            'query' => 'ALTER TABLE test DROP PRIMARY KEY, ADD PRIMARY KEY (new_id)',
+        ];
+        $this->assertStringEndsWith(
+            ', ALGORITHM=INPLACE, LOCK=NONE',
+            InnodbOnlineDdl::getQueryOrCommand($query, [])
+        );
     }
 }
