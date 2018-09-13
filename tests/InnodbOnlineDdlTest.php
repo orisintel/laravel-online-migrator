@@ -66,6 +66,16 @@ class InnodbOnlineDdlTest extends TestCase
         );
     }
 
+    public function test_getQueryOrCommand_rewritesDropIndex()
+    {
+        $query = ['query' => 'DROP INDEX idx ON test'];
+
+        $this->assertStringEndsWith(
+            ' ALGORITHM=INPLACE LOCK=NONE',
+            InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
+        );
+    }
+
     public function test_migrate_addsColumn()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-column');

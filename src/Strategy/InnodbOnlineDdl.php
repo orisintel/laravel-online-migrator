@@ -30,8 +30,10 @@ class InnodbOnlineDdl implements StrategyInterface
         $create_re = '/\A\s*CREATE\s+'
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
             . 'INDEX\s+/imu';
+        $drop_re = '/\A\s*DROP\s+INDEX\s+/imu';
         if (preg_match($alter_re, $query_or_command_str, $alter_parts)
             || preg_match($create_re, $query_or_command_str, $create_parts)
+            || preg_match($drop_re, $query_or_command_str)
         ) {
             $separator = ! empty($alter_parts) ? ', ' : ' ';
 

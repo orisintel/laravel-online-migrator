@@ -3,11 +3,23 @@
 namespace OrisIntel\OnlineMigrator\Tests;
 
 
+use OrisIntel\OnlineMigrator\Strategy\PtOnlineSchemaChange;
+
 class PtOnlineSchemaChangeTest extends TestCase
 {
     // TODO: Find a way to confirm commands executed through PTOSC since
     // getting output from $this->artisan, Artisan::call, and console Kernel
     // aren't working yet, and loadMigrationsFrom is opaque.
+
+    public function test_getQueryOrCommand_rewritesDropIndex()
+    {
+        $query = ['query' => 'DROP INDEX idx ON test'];
+
+        $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
+        $this->assertStringStartsWith('pt-online-schema-change', $command);
+        $this->assertContains("'DROP INDEX", $command);
+        $this->assertNotContains(' ON test ', $command);
+    }
 
     public function test_migrate_addsColumn()
     {
@@ -86,5 +98,19 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->expectException(\PDOException::class);
         $this->expectExceptionCode(23000);
         \DB::table('test_om_with_primary')->insert(['name' => 'alice']);
+    }
+
+    public function test_migrate_dropsIndexWithSql()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/drops-index-with-raw-sql');
+
+        $show_create_sql = str_replace('`', '',
+            array_last(
+                \DB::select('show create table test_om')
+            )->{"Create Table"}
+        );
+
+        $this->assertNotContains('FULLTEXT', $show_create_sql);
     }
 }

@@ -32,6 +32,8 @@ class PtOnlineSchemaChange implements StrategyInterface
         $create_re = '/\A\s*CREATE\s+'
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
             . 'INDEX\s+`?([^`\s]+)`?\s+ON\s+`?([^`\s]+)`?\s+?/imu';
+        $drop_re = '/\A\s*DROP\s+'
+            . 'INDEX\s+`?([^`\s]+)`?\s+ON\s+`?([^`\s]+)`?\s*?/imu';
         if (preg_match($alter_re, $query_or_command_str, $alter_parts)) {
             $table_name = $alter_parts[1];
             // Changing query so pretendToRun output will match command.
@@ -42,6 +44,11 @@ class PtOnlineSchemaChange implements StrategyInterface
             $table_name = $create_parts[4];
             $changes = "ADD $create_parts[2] INDEX $index_name "
                 . preg_replace($create_re, '', $query_or_command_str);
+        } elseif (preg_match($drop_re, $query_or_command_str, $drop_parts)) {
+            $index_name = $drop_parts[1];
+            $table_name = $drop_parts[2];
+            $changes = "DROP INDEX $index_name "
+                . preg_replace($drop_re, '', $query_or_command_str);
         }
 
         if ($table_name && $changes) {
