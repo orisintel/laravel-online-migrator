@@ -23,7 +23,7 @@ class InnodbOnlineDdl implements StrategyInterface
      */
     public static function getQueryOrCommand(array &$query, Connection $connection)
     {
-        $query_or_command_str = $query['query'];
+        $query_or_command_str = rtrim($query['query'], '; ');
 
         // CONSIDER: Checking whether InnoDB table (and using diff. strategy?).
         $re = '/^\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/imu';
