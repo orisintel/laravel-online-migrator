@@ -7,7 +7,7 @@ use Illuminate\Database\Connection;
 class InnodbOnlineDdl implements StrategyInterface
 {
     private const INPLACE_INCOMPATIBLE = [
-        'ALTER\s+TABLE\s+`?[^`\s]+`?\s+CHANGE', // CONSIDER: Only when type changes.
+        'ALTER\s+TABLE\s+`?[^`\s]+`?\s+(CHANGE|MODIFY)', // CONSIDER: Only when type changes.
         'CONVERT\s+TO\s+CHARACTER\s+SET',
         'DROP\s+PRIMARY\s+KEY(?!,\s*ADD\s+PRIMARY\s+KEY)',
         // Foreign keys depend upon state of foreign_key_checks.
