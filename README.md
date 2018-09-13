@@ -20,8 +20,7 @@ composer require orisintel/laravel-online-migrator
 ```
 
 The `pt-online-schema-change` command from Percona's toolkit must be in the path
-where migrations will be applied or rolled back, unless InnoDB Online DDL is
-being used exclusively.
+where Artisan will be run, unless InnoDB Online DDL is being used exclusively.
 
 ### Configuration
 

@@ -31,9 +31,7 @@ class OnlineMigratorServiceProvider extends MigrationServiceProvider
     {
         // Provides hook to send SQL DDL changes through pt-online-schema-change in CLI
         $this->app->singleton('migrator', function ($app) {
-            $respository = $app['migration.repository'];
-
-            return new OnlineMigrator($respository, $app['db'], $app['files']);
+            return new OnlineMigrator($app['migration.repository'], $app['db'], $app['files']);
         });
     }
 }
