@@ -20,6 +20,30 @@ class InnodbOnlineDdlTest extends TestCase
         $app['config']->set('online-migrator.strategy', 'innodb-online-ddl');
     }
 
+    public function test_getQueryOrCommand_algorithmCopyWhenAddFkChecksOn()
+    {
+        $query = [
+            'query' => 'ALTER TABLE test ADD FOREIGN KEY (my_fk_id) REFERENCES test_om2 (id)',
+        ];
+        $this->assertStringEndsWith(
+            ', ALGORITHM=COPY, LOCK=SHARED',
+            InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
+        );
+    }
+
+    public function test_getQueryOrCommand_algorithmInplaceWhenAddFkChecksOff()
+    {
+        $connection = \DB::connection();
+        $connection->statement('SET foreign_key_checks=OFF');
+        $query = [
+            'query' => 'ALTER TABLE test ADD FOREIGN KEY (my_fk_id) REFERENCES test_om2 (id)',
+        ];
+        $this->assertStringEndsWith(
+            ', ALGORITHM=INPLACE, LOCK=NONE',
+            InnodbOnlineDdl::getQueryOrCommand($query, $connection)
+        );
+    }
+
     public function test_getQueryOrCommand_algorithmCopyWhenDropPk()
     {
         $query = [
@@ -27,7 +51,7 @@ class InnodbOnlineDdlTest extends TestCase
         ];
         $this->assertStringEndsWith(
             ', ALGORITHM=COPY, LOCK=SHARED',
-            InnodbOnlineDdl::getQueryOrCommand($query, [])
+            InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
         );
     }
 
@@ -38,7 +62,7 @@ class InnodbOnlineDdlTest extends TestCase
         ];
         $this->assertStringEndsWith(
             ', ALGORITHM=INPLACE, LOCK=NONE',
-            InnodbOnlineDdl::getQueryOrCommand($query, [])
+            InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
         );
     }
 

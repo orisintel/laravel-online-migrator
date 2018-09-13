@@ -86,7 +86,8 @@ class MyColumnWithFkMigration extends Migration
     - Close the `Schema::create()` call and make a separate `Schema::table()`
       call for all FKs in the migration
 - With InnoDB Online DDL
-  - See the [MySQL Online DDL documentation](https://dev.mysql.com/doc/refman/5.6/en/innodb-create-index-overview.html).
+  - See the [MySQL Online DDL documentation](https://dev.mysql.com/doc/refman/5.6/en/innodb-create-index-overview.html)
+  - May be [problematic on AWS Aurora](https://medium.com/@soomiq/why-you-should-not-use-mysql-5-6-online-ddl-on-aws-aurora-40985d5e90f5)
 - Stateful migrations, like those selecting _then_ saving rows,
   will instead need to do one of the following:
   - Use non-selecting queries like `MyModel::where(...)->update(...)`

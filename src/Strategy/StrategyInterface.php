@@ -14,7 +14,7 @@ interface StrategyInterface
      *
      * @return string
      */
-    public static function getQueryOrCommand(array &$query, array $db_config);
+    public static function getQueryOrCommand(array &$query, Connection $connection);
 
     /**
      * Execute query or on-line command.

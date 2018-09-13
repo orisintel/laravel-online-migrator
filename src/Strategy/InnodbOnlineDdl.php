@@ -9,8 +9,8 @@ class InnodbOnlineDdl implements StrategyInterface
     private const INPLACE_INCOMPATIBLE = [
         'ALTER\s+TABLE\s+`?[^`\s]+`?\s+CHANGE', // CONSIDER: Only when type changes.
         'CONVERT\s+TO\s+CHARACTER\s+SET',
-        'FOREIGN\s+KEY',
         'DROP\s+PRIMARY\s+KEY(?!,\s*ADD\s+PRIMARY\s+KEY)',
+        // Foreign keys depend upon state of foreign_key_checks.
     ];
 
     /**
@@ -21,7 +21,7 @@ class InnodbOnlineDdl implements StrategyInterface
      *
      * @return string
      */
-    public static function getQueryOrCommand(array &$query, array $db_config)
+    public static function getQueryOrCommand(array &$query, Connection $connection)
     {
         $query_or_command_str = $query['query'];
 
@@ -32,13 +32,10 @@ class InnodbOnlineDdl implements StrategyInterface
             // per migration.
             // CONSIDER: Falling back to 'COPY' if 'INPLACE' is stopped.
             $algorithm = null;
-            // CONSIDER: Supporting FKs by setting foreign_key_checks=OFF
             if (! preg_match('/\s*,\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $m)) {
-                // Some changes must be a 'COPY'.
-                $algorithm = preg_match(
-                    '/\b(' . implode('|', static::INPLACE_INCOMPATIBLE) . ')\b/iu',
-                    $query_or_command_str
-                ) ? 'COPY' : 'INPLACE';
+                $algorithm = static::isInplaceCompatible($query_or_command_str, $connection)
+                    ? 'INPLACE' : 'COPY';
+
                 $query_or_command_str .= ', ALGORITHM=' . $algorithm;
             } else {
                 $algorithm = strtoupper(trim($m[1]));
@@ -51,6 +48,23 @@ class InnodbOnlineDdl implements StrategyInterface
         }
 
         return $query_or_command_str;
+    }
+
+    private static function isInplaceCompatible(string $query_str, Connection $connection) : bool
+    {
+        // Migration authors may disable FKs to allow in-place altering.
+        // CONSIDER: Automatically setting foreign_key_checks=OFF, then back ON.
+        if (preg_match('/\bFOREIGN\s+KEY\b/imu', $query_str)) {
+            $foreign_key_checks = $connection->select('SELECT @@FOREIGN_KEY_CHECKS')[0]->{'@@FOREIGN_KEY_CHECKS'};
+            if (1 === $foreign_key_checks) {
+                return false;
+            }
+        }
+
+        return preg_match(
+            '/\b(' . implode('|', static::INPLACE_INCOMPATIBLE) . ')\b/imu',
+            $query_str
+        ) ? false : true;
     }
 
     /**

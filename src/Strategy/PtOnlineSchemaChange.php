@@ -20,7 +20,7 @@ class PtOnlineSchemaChange implements StrategyInterface
      *
      * @return string
      */
-    public static function getQueryOrCommand(array &$query, array $db_config)
+    public static function getQueryOrCommand(array &$query, Connection $connection)
     {
         $query_or_command_str = $query['query'];
         // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
@@ -58,6 +58,7 @@ class PtOnlineSchemaChange implements StrategyInterface
                     'Cannot run PTOSC with --dry-run because it would incompletely change the database. Remove from PTOSC_OPTIONS.');
             }
 
+            $db_config = $connection->getConfig();
             $query_or_command_str = 'pt-online-schema-change --alter '
                 . escapeshellarg($changes)
                 . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $m[1])

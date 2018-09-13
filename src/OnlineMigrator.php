@@ -52,9 +52,9 @@ class OnlineMigrator extends Migrator
         });
         // END: Copied from parent.
 
-        $strategy = self::getStrategy();
+        $strategy = self::getStrategy($migration);
         foreach ($queries as &$query) {
-            $query['query'] = $strategy::getQueryOrCommand($query, $db->getConfig());
+            $query['query'] = $strategy::getQueryOrCommand($query, $db);
         }
 
         return $queries;
@@ -100,17 +100,18 @@ class OnlineMigrator extends Migrator
         // CONSIDER: Trying to run non-alters inside DB transaction.
         // CONSIDER: Emitting warning if $this->getSchemaGrammar($connection)->supportsSchemaTransactions().
 
-        $strategy = self::getStrategy();
+        $strategy = self::getStrategy($migration);
         foreach ($queries as &$query) {
             $strategy::runQueryOrCommand($query, $connection);
         }
     }
 
-    private function getStrategy() : string
+    private function getStrategy($migration) : string
     {
         return str_start(
             studly_case(
-                config('online-migrator.strategy', 'pt-online-schema-change')
+                $migration->onlineStrategy
+                ?? config('online-migrator.strategy', 'pt-online-schema-change')
             ),
             '\\OrisIntel\\OnlineMigrator\\Strategy\\'
         );
