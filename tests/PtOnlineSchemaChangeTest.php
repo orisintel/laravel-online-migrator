@@ -66,6 +66,19 @@ class PtOnlineSchemaChangeTest extends TestCase
         ], $m[1]);
     }
 
+    public function test_migrate_createsIndexWithSql()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');
+
+        $show_create_sql = str_replace('`', '',
+            array_last(
+                \DB::select('show create table test_om')
+            )->{"Create Table"}
+        );
+
+        $this->assertContains('FULLTEXT', $show_create_sql);
+    }
+
     public function test_migrate_createsTableWithPrimary()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-table-with-primary');

@@ -28,7 +28,6 @@ class InnodbOnlineDdl implements StrategyInterface
         // CONSIDER: Checking whether InnoDB table (and using diff. strategy?).
         $alter_re = '/\A\s*ALTER\s+TABLE\s+`?[^\s`]+`?\s*(.*)/imu';
         $create_re = '/\A\s*CREATE\s+'
-            . '((ONLINE|OFFLINE)\s+)?'
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
             . 'INDEX\s+/imu';
         if (preg_match($alter_re, $query_or_command_str, $alter_parts)
@@ -53,7 +52,7 @@ class InnodbOnlineDdl implements StrategyInterface
                 $has_auto_increment = preg_match('/\bAUTO_INCREMENT\b/imu', $alter_parts[1] ?? '');
                 // CONSIDER: Supporting non-alter statements like "CREATE (FULLTEXT) INDEX".
                 $has_fulltext = preg_match('/\A\s*ADD\s+FULLTEXT\b/imu', $alter_parts[1] ?? '')
-                    || 0 === stripos($create_parts[4] ?? '', 'FULLTEXT');
+                    || 0 === stripos($create_parts[2] ?? '', 'FULLTEXT');
                 $lock = 'COPY' === $algorithm || $has_auto_increment || $has_fulltext
                     ? 'SHARED' : 'NONE';
                 $query_or_command_str .= $separator . 'LOCK=' . $lock;

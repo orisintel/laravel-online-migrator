@@ -25,13 +25,26 @@ class PtOnlineSchemaChange implements StrategyInterface
         $query_or_command_str = $query['query'];
         // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
 
-        // CONSIDER: Supporting "CREATE INDEX".
-        $re = '/^\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/iu';
-        if (preg_match($re, $query_or_command_str, $m)) {
+        $table_name = null;
+        $changes = null;
+
+        $alter_re = '/\A\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/imu';
+        $create_re = '/\A\s*CREATE\s+'
+            . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
+            . 'INDEX\s+`?([^`\s]+)`?\s+ON\s+`?([^`\s]+)`?\s+?/imu';
+        if (preg_match($alter_re, $query_or_command_str, $alter_parts)) {
+            $table_name = $alter_parts[1];
             // Changing query so pretendToRun output will match command.
             // CONSIDER: Separate index and overriding pretendToRun instead.
-            $changes = preg_replace($re, '', $query_or_command_str);
+            $changes = preg_replace($alter_re, '', $query_or_command_str);
+        } elseif (preg_match($create_re, $query_or_command_str, $create_parts)) {
+            $index_name = $create_parts[3];
+            $table_name = $create_parts[4];
+            $changes = "ADD $create_parts[2] INDEX $index_name "
+                . preg_replace($create_re, '', $query_or_command_str);
+        }
 
+        if ($table_name && $changes) {
             // HACK: Workaround PTOSC quirk with escaping and defaults.
             $changes = str_replace(
                 ["default '0'", "default '1'"],
@@ -61,7 +74,7 @@ class PtOnlineSchemaChange implements StrategyInterface
             $db_config = $connection->getConfig();
             $query_or_command_str = 'pt-online-schema-change --alter '
                 . escapeshellarg($changes)
-                . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $m[1])
+                . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $table_name)
                 . ' --host ' . escapeshellarg($db_config['host'])
                 . ' --port ' . escapeshellarg($db_config['port'])
                 . ' --user ' . escapeshellarg($db_config['username'])
