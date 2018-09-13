@@ -43,7 +43,10 @@ class InnodbOnlineDdl implements StrategyInterface
 
             if (! preg_match('/\s*,\s*LOCK\s*=/iu', $query_or_command_str)) {
                 $has_auto_increment = preg_match('/\bAUTO_INCREMENT\b/imu', $alter_parts[2]);
-                $lock = 'COPY' === $algorithm || $has_auto_increment ? 'SHARED' : 'NONE';
+                // CONSIDER: Supporting non-alter statements like "CREATE (FULLTEXT) INDEX".
+                $has_fulltext = preg_match('/\A\s*ADD\s+FULLTEXT\b/imu', $alter_parts[2]);
+                $lock = 'COPY' === $algorithm || $has_auto_increment || $has_fulltext
+                    ? 'SHARED' : 'NONE';
                 $query_or_command_str .= ', LOCK=' . $lock;
             }
         }
