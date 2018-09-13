@@ -5,10 +5,11 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/orisintel/laravel-online-migrator.svg?style=flat-square)](https://packagist.org/packages/orisintel/laravel-online-migrator)
 
 This package minimizes disruptions when applying Laravel's database migrations
-using tools like [Percona Online Schema Change](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html).
+using tools like [Percona Online Schema Change](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html)
+or [InnoDB Online DDL](https://dev.mysql.com/doc/refman/5.6/en/innodb-online-ddl.html).
 For example, one can write (mostly) standard Laravel migration files then run
-"php artisan migrate". Database changes will be automatically automatically
-converted into PTOSC commands.
+"php artisan migrate". Database changes will be automatically converted into
+PTOSC commands or online DDL queries.
 
 ## Installation
 
@@ -19,7 +20,8 @@ composer require orisintel/laravel-online-migrator
 ```
 
 The `pt-online-schema-change` command from Percona's toolkit must be in the path
-where migrations will be applied or rolled back.
+where migrations will be applied or rolled back, unless InnoDB Online DDL is
+being used exclusively.
 
 ### Configuration
 
@@ -57,7 +59,14 @@ Flag migrations known to be incompatible with this tool using the built-in trait
 ``` php
 class MyMigration extends Migration
 {
-    use \OrisIntel\OnlineMigrator\Trait\OnlineIncompatible
+    use \OrisIntel\OnlineMigrator\OnlineIncompatible
+```
+
+Use a different strategy for a single migration:
+``` php
+class MyMigration extends Migration
+{
+    use \OrisIntel\OnlineMigrator\InnodbOnlineDdl
 ```
 
 Adding foreign key with index to existing table:
