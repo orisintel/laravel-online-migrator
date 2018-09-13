@@ -26,23 +26,24 @@ class InnodbOnlineDdl implements StrategyInterface
         $query_or_command_str = rtrim($query['query'], '; ');
 
         // CONSIDER: Checking whether InnoDB table (and using diff. strategy?).
-        $re = '/^\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/imu';
-        if (preg_match($re, $query_or_command_str)) {
+        $re = '/\A\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*(.*)/imu';
+        if (preg_match($re, $query_or_command_str, $alter_parts)) {
             // CONSIDER: Making algorithm and lock configurable generally and
             // per migration.
             // CONSIDER: Falling back to 'COPY' if 'INPLACE' is stopped.
             $algorithm = null;
-            if (! preg_match('/\s*,\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $m)) {
+            if (! preg_match('/\s*,\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $algo_parts)) {
                 $algorithm = static::isInplaceCompatible($query_or_command_str, $connection)
                     ? 'INPLACE' : 'COPY';
 
                 $query_or_command_str .= ', ALGORITHM=' . $algorithm;
             } else {
-                $algorithm = strtoupper(trim($m[1]));
+                $algorithm = strtoupper(trim($algo_parts[1]));
             }
 
             if (! preg_match('/\s*,\s*LOCK\s*=/iu', $query_or_command_str)) {
-                $lock = 'COPY' === $algorithm ? 'SHARED' : 'NONE';
+                $has_auto_increment = preg_match('/\bAUTO_INCREMENT\b/imu', $alter_parts[2]);
+                $lock = 'COPY' === $algorithm || $has_auto_increment ? 'SHARED' : 'NONE';
                 $query_or_command_str .= ', LOCK=' . $lock;
             }
         }
