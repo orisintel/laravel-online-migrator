@@ -3,7 +3,7 @@
 namespace OrisIntel\OnlineMigrator\Tests;
 
 
-class OnlineMigratorTest extends TestCase
+class PtOnlineSchemaChangeTest extends TestCase
 {
     // TODO: Find a way to confirm commands executed through PTOSC since
     // getting output from $this->artisan, Artisan::call, and console Kernel
@@ -35,6 +35,14 @@ class OnlineMigratorTest extends TestCase
         // HACK: Workaround Travis CI passthru return_var differences from local.
         $this->expectExceptionCode(getenv('TRAVIS') ? 255 : 29);
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-without-default');
+    }
+
+    public function test_migrate_changesType()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/changes-type');
+
+        $expanded_name = \DB::table('test_om')->where('id', 1)->value('name');
+        $this->assertEquals(65535, mb_strlen($expanded_name));
     }
 
     public function test_migrate_createsFkWithIndex()

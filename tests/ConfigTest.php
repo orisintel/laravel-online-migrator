@@ -8,6 +8,7 @@ class ConfigTest extends TestCase
     protected function getEnvironmentSetUp($app)
     {
         $app['config']->set('online-migrator.enabled', '0');
+        $app['config']->set('online-migrator.strategy', 'pt-online-schema-change');
     }
 
     public function test_config_notEnabledAddsWithoutDefault()
