@@ -136,6 +136,15 @@ class InnodbOnlineDdlTest extends TestCase
         ], $m[1]);
     }
 
+    public function test_migrate_createsIndexWithSql()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');
+
+        $this->assertStringEndsWith(' ALGORITHM=INPLACE LOCK=SHARED',
+            // HACK: Ignore unmodified copies of queries in log.
+            \DB::getQueryLog()[1]['query']);
+    }
+
     public function test_migrate_createsTableWithPrimary()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-table-with-primary');

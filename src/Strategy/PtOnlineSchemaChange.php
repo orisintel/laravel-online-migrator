@@ -24,8 +24,8 @@ class PtOnlineSchemaChange implements StrategyInterface
     {
         $query_or_command_str = $query['query'];
         // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
-        // CONSIDER: Converting charset to "--charset...".
 
+        // CONSIDER: Supporting "CREATE INDEX".
         $re = '/^\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/iu';
         if (preg_match($re, $query_or_command_str, $m)) {
             // Changing query so pretendToRun output will match command.
