@@ -23,7 +23,7 @@ class InnodbOnlineDdlTest extends TestCase
     public function test_getQueryOrCommand_algorithmCopyWhenAddFkChecksOn()
     {
         $query = [
-            'query' => 'ALTER TABLE test ADD FOREIGN KEY (my_fk_id) REFERENCES test_om2 (id)',
+            'query' => 'ALTER TABLE test_om ADD FOREIGN KEY (my_fk_id) REFERENCES test_om2 (id)',
         ];
         $this->assertStringEndsWith(
             ', ALGORITHM=COPY, LOCK=SHARED',
@@ -36,7 +36,7 @@ class InnodbOnlineDdlTest extends TestCase
         $connection = \DB::connection();
         $connection->statement('SET foreign_key_checks=OFF');
         $query = [
-            'query' => 'ALTER TABLE test ADD FOREIGN KEY (my_fk_id) REFERENCES test_om2 (id)',
+            'query' => 'ALTER TABLE test_om ADD FOREIGN KEY (my_fk_id) REFERENCES test_om2 (id)',
         ];
         $this->assertStringEndsWith(
             ', ALGORITHM=INPLACE, LOCK=NONE',
@@ -47,7 +47,7 @@ class InnodbOnlineDdlTest extends TestCase
     public function test_getQueryOrCommand_algorithmCopyWhenDropPk()
     {
         $query = [
-            'query' => 'ALTER TABLE test DROP PRIMARY KEY',
+            'query' => 'ALTER TABLE test_om DROP PRIMARY KEY',
         ];
         $this->assertStringEndsWith(
             ', ALGORITHM=COPY, LOCK=SHARED',
@@ -58,7 +58,7 @@ class InnodbOnlineDdlTest extends TestCase
     public function test_getQueryOrCommand_algorithmInplaceWhenDropAddPk()
     {
         $query = [
-            'query' => 'ALTER TABLE test DROP PRIMARY KEY, ADD PRIMARY KEY (new_id)',
+            'query' => 'ALTER TABLE test_om DROP PRIMARY KEY, ADD PRIMARY KEY (new_id)',
         ];
         $this->assertStringEndsWith(
             ', ALGORITHM=INPLACE, LOCK=NONE',
@@ -68,22 +68,22 @@ class InnodbOnlineDdlTest extends TestCase
 
     public function test_getQueryOrCommand_doesNotChangeExistingAlgorithm()
     {
-        $query = ['query' => 'DROP INDEX idx ON test algorithm=INPLACE'];
+        $query = ['query' => 'DROP INDEX idx ON test_om algorithm=INPLACE'];
         $this->assertEquals(
-            'DROP INDEX idx ON test algorithm=INPLACE LOCK=NONE',
+            'DROP INDEX idx ON test_om algorithm=INPLACE LOCK=NONE',
             InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
         );
 
-        $query = ['query' => 'ALTER TABLE t ADD c, algorithm=COPY'];
+        $query = ['query' => 'ALTER TABLE test_om ADD c, algorithm=COPY'];
         $this->assertEquals(
-            'ALTER TABLE t ADD c, algorithm=COPY, LOCK=SHARED',
+            'ALTER TABLE test_om ADD c, algorithm=COPY, LOCK=SHARED',
             InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
         );
     }
 
     public function test_getQueryOrCommand_rewritesDropIndex()
     {
-        $query = ['query' => 'DROP INDEX idx ON test'];
+        $query = ['query' => 'DROP INDEX idx ON test_om'];
 
         $this->assertStringEndsWith(
             ' ALGORITHM=INPLACE LOCK=NONE',
@@ -99,7 +99,17 @@ class InnodbOnlineDdlTest extends TestCase
             'alter table `test_om` add `color` varchar(255) null, ALGORITHM=INPLACE, LOCK=NONE',
             // HACK: Ignore unmodified copies of queries in log.
             // CONSIDER: Fixing implementation to avoid dupes in query log.
-            \DB::getQueryLog()[2]['query']);
+            \DB::getQueryLog()[3]['query']);
+
+        $test_row_one = \DB::table('test_om')->where('name', 'one')->first();
+        $this->assertNotNull($test_row_one);
+        $this->assertEquals('green', $test_row_one->color);
+    }
+
+    public function test_migrate_doesNotUseOnlineDdlWithMyisamEngine()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/changes-engine');
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-column');
 
         $test_row_one = \DB::table('test_om')->where('name', 'one')->first();
         $this->assertNotNull($test_row_one);
@@ -113,7 +123,7 @@ class InnodbOnlineDdlTest extends TestCase
         $this->assertEquals(
             'alter table `test_om` add unique `test_om_name_unique`(`name`), ALGORITHM=INPLACE, LOCK=NONE',
             // HACK: Ignore unmodified copies of queries in log.
-            \DB::getQueryLog()[1]['query']);
+            \DB::getQueryLog()[2]['query']);
 
         $this->expectException(\PDOException::class);
         $this->expectExceptionCode(23000);
@@ -127,7 +137,7 @@ class InnodbOnlineDdlTest extends TestCase
         $this->assertEquals(
             'alter table `test_om` add `without_default` varchar(255) not null, ALGORITHM=INPLACE, LOCK=NONE',
             // HACK: Ignore unmodified copies of queries in log.
-            \DB::getQueryLog()[2]['query']);
+            \DB::getQueryLog()[3]['query']);
 
         $this->assertEquals('column added', \DB::table('test_om')->first()->without_default ?? null);
     }
@@ -138,7 +148,7 @@ class InnodbOnlineDdlTest extends TestCase
 
         $this->assertStringEndsWith(', ALGORITHM=COPY, LOCK=SHARED',
             // HACK: Ignore unmodified copies of queries in log.
-            \DB::getQueryLog()[2]['query']);
+            \DB::getQueryLog()[3]['query']);
 
         $expanded_name = \DB::table('test_om')->where('id', 1)->value('name');
         $this->assertEquals(65535, mb_strlen($expanded_name));
@@ -167,7 +177,7 @@ class InnodbOnlineDdlTest extends TestCase
 
         $this->assertStringEndsWith(' ALGORITHM=INPLACE LOCK=SHARED',
             // HACK: Ignore unmodified copies of queries in log.
-            \DB::getQueryLog()[1]['query']);
+            \DB::getQueryLog()[2]['query']);
     }
 
     public function test_migrate_createsTableWithPrimary()

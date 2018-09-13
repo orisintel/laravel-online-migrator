@@ -25,16 +25,31 @@ class InnodbOnlineDdl implements StrategyInterface
     {
         $query_or_command_str = rtrim($query['query'], '; ');
 
-        // CONSIDER: Checking whether InnoDB table (and using diff. strategy?).
-        $alter_re = '/\A\s*ALTER\s+TABLE\s+`?[^\s`]+`?\s*(.*)/imu';
+        $alter_re = '/\A\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*(.*)/imu';
         $create_re = '/\A\s*CREATE\s+'
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
-            . 'INDEX\s+/imu';
-        $drop_re = '/\A\s*DROP\s+INDEX\s+/imu';
+            . 'INDEX\s+`?[^`\s]+`?\s+ON\s+`?([^\s`]+)`?/imu';
+        $drop_re = '/\A\s*DROP\s+INDEX\s+`?[^`\s]+`?\s+ON\s+`?([^`\s]+)`?/imu';
         if (preg_match($alter_re, $query_or_command_str, $alter_parts)
             || preg_match($create_re, $query_or_command_str, $create_parts)
-            || preg_match($drop_re, $query_or_command_str)
+            || preg_match($drop_re, $query_or_command_str, $drop_parts)
         ) {
+            // Changing engine already uses on-line DDL.
+            if (0 === stripos($alter_parts[2] ?? '', 'ENGINE')) {
+                return $query_or_command_str;
+            }
+
+            $table_name = $alter_parts[1] ?? $create_parts[3] ?? $drop_parts[1];
+            $engine = $connection->table('information_schema.tables')
+                ->where('table_name', $table_name)
+                ->value('engine');
+            // CONSIDER: Blacklisting known-to-be unsupported instead, or making
+            // whitelist configurable, since others may have similar online DDL.
+            if ('InnoDB' !== $engine) {
+                // CONSIDER: Using different strategy, like PTOSC.
+                return $query_or_command_str;
+            }
+
             $separator = ! empty($alter_parts) ? ', ' : ' ';
 
             // CONSIDER: Making algorithm and lock configurable generally and
@@ -51,9 +66,9 @@ class InnodbOnlineDdl implements StrategyInterface
             }
 
             if (! preg_match('/[\s,]\s*LOCK\s*=/iu', $query_or_command_str)) {
-                $has_auto_increment = preg_match('/\bAUTO_INCREMENT\b/imu', $alter_parts[1] ?? '');
+                $has_auto_increment = preg_match('/\bAUTO_INCREMENT\b/imu', $alter_parts[2] ?? '');
                 // CONSIDER: Supporting non-alter statements like "CREATE (FULLTEXT) INDEX".
-                $has_fulltext = preg_match('/\A\s*ADD\s+FULLTEXT\b/imu', $alter_parts[1] ?? '')
+                $has_fulltext = preg_match('/\A\s*ADD\s+FULLTEXT\b/imu', $alter_parts[2] ?? '')
                     || 0 === stripos($create_parts[2] ?? '', 'FULLTEXT');
                 $lock = 'COPY' === $algorithm || $has_auto_increment || $has_fulltext
                     ? 'SHARED' : 'NONE';
