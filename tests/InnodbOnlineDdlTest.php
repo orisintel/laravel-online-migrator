@@ -66,6 +66,21 @@ class InnodbOnlineDdlTest extends TestCase
         );
     }
 
+    public function test_getQueryOrCommand_doesNotChangeExistingAlgorithm()
+    {
+        $query = ['query' => 'DROP INDEX idx ON test algorithm=INPLACE'];
+        $this->assertEquals(
+            'DROP INDEX idx ON test algorithm=INPLACE LOCK=NONE',
+            InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
+        );
+
+        $query = ['query' => 'ALTER TABLE t ADD c, algorithm=COPY'];
+        $this->assertEquals(
+            'ALTER TABLE t ADD c, algorithm=COPY, LOCK=SHARED',
+            InnodbOnlineDdl::getQueryOrCommand($query, \DB::connection())
+        );
+    }
+
     public function test_getQueryOrCommand_rewritesDropIndex()
     {
         $query = ['query' => 'DROP INDEX idx ON test'];

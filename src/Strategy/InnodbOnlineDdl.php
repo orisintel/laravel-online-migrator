@@ -41,7 +41,7 @@ class InnodbOnlineDdl implements StrategyInterface
             // per migration.
             // CONSIDER: Falling back to 'COPY' if 'INPLACE' is stopped.
             $algorithm = null;
-            if (! preg_match('/\s*,\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $algo_parts)) {
+            if (! preg_match('/[\s,]\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $algo_parts)) {
                 $algorithm = static::isInplaceCompatible($query_or_command_str, $connection)
                     ? 'INPLACE' : 'COPY';
 
@@ -50,7 +50,7 @@ class InnodbOnlineDdl implements StrategyInterface
                 $algorithm = strtoupper(trim($algo_parts[1]));
             }
 
-            if (! preg_match('/\s*,\s*LOCK\s*=/iu', $query_or_command_str)) {
+            if (! preg_match('/[\s,]\s*LOCK\s*=/iu', $query_or_command_str)) {
                 $has_auto_increment = preg_match('/\bAUTO_INCREMENT\b/imu', $alter_parts[1] ?? '');
                 // CONSIDER: Supporting non-alter statements like "CREATE (FULLTEXT) INDEX".
                 $has_fulltext = preg_match('/\A\s*ADD\s+FULLTEXT\b/imu', $alter_parts[1] ?? '')
