@@ -30,6 +30,23 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->assertEquals('green', $test_row_one->color);
     }
 
+    public function test_migrate_addsColumnsNotNullWithNoDefaults()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-columns-not-null-no-defaults');
+
+        $test_row_one = \DB::table('test_om')->where('id', 1)->first();
+        $this->assertNotNull($test_row_one);
+        $this->assertEquals(false, $test_row_one->boolean_no_default);
+        $this->assertEquals('0001-01-01', $test_row_one->date_no_default);
+        $this->assertEquals('0001-01-01 00:00:00', $test_row_one->datetime_no_default);
+        $this->assertEquals(0.0, $test_row_one->float_no_default);
+        $this->assertEquals(0, $test_row_one->integer_no_default);
+        $this->assertEquals('', $test_row_one->string_no_default);
+        $this->assertEquals('00:00:00', $test_row_one->time_no_default);
+        $this->assertEquals('1970-01-01 00:00:01', $test_row_one->timestamp_no_default);
+        $this->assertEquals('', $test_row_one->uuid_no_default);
+    }
+
     public function test_migrate_addsUnique()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-unique');
@@ -39,6 +56,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         \DB::table('test_om')->insert(['name' => 'one']);
     }
 
+    /* TODO: Move to test class with ptosc-auto-defaults is false or remove
     public function test_migrate_addsWithoutDefault()
     {
         // Known to be unsupported by PTOSC (v3) for the time being, so this
@@ -48,6 +66,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->expectExceptionCode(getenv('TRAVIS') ? 255 : 29);
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-without-default');
     }
+    */
 
     public function test_migrate_changesType()
     {
