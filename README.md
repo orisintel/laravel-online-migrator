@@ -88,6 +88,8 @@ class MyColumnWithFkMigration extends Migration
   - Adding unique indexes may cause data loss unless tables are manually checked
     beforehand [because of how PTOSC works](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id7)
   - Adding not-null columns [requires a default](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#cmdoption-pt-online-schema-change-alter)
+    so this package will automatically add default to new columns
+    - See `ptosc-auto-defaults` in `config/online-migrator.php` for more.
   - Renaming a column or dropping a primary key [have additional risks](https://www.percona.com/doc/percona-toolkit/LATEST/pt-online-schema-change.html#id1)
   - Foreign key creation should be done separately from column creation or
     duplicate indexes may be created with slightly different naming
