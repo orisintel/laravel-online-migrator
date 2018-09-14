@@ -9,8 +9,8 @@ return [
     | When not specified it will use the on-line capabilities; except for DBs
     | with 'test' in their name.
     |
-    | '0' bypasses any on-line tools and sends queries unchanged.
-    | '1' (or any truthy value) forces use of the on-line tools.
+    | `0` bypasses any on-line tools and sends queries unchanged.
+    | `1` (or any truthy value) forces use of the on-line tools.
     |
     */
 
@@ -34,7 +34,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Percona Online Schema Change Options
+    | Percona Online Schema Change - Options
     |--------------------------------------------------------------------------
     |
     | Accepts a comma-separated list of options for pt-online-schema-change.
@@ -48,4 +48,23 @@ return [
     */
 
     'ptosc-options' => env('PTOSC_OPTIONS'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automatic Defaults For Percona Online Schema Change
+    |--------------------------------------------------------------------------
+    |
+    | Whether or not to automatically add defaults to not-null columns. Doing
+    | so works around the not-null-default requirement of PTOSC using defaults
+    | similar to what Mysql would use in non-strict mode.
+    |
+    | INTEGER: 0
+    | DATETIME: '0001-01-01 00:00:00'
+    |
+    | Set this to `false` if you prefer your migrations explicitly assign
+    | defaults as needed.
+    |
+    */
+
+    'ptosc-auto-defaults' => env('PTOSC_AUTO_DEFAULTS', true),
 ];

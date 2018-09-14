@@ -12,6 +12,22 @@ use Illuminate\Database\Connection;
 
 class PtOnlineSchemaChange implements StrategyInterface
 {
+    /** Mimicking non-strict defaults as closely as practical. */
+    private const AUTO_DEFAULTS = [
+        'boolean' => 'FALSE',
+        'char' => "''",
+        'date' => "'0001-01-01'",
+        'datetime' => "'0001-01-01 00:00:00'",
+        'decimal' => '0.0',
+        'double' => '0.0',
+        'int' => '0',
+        'numeric' => '0.0',
+        // Text cannot have a default unless non-strict mode.
+        'time' => "'00:00:00'",
+        'timestamp' => "'1970-01-01 00:00:01'",
+        'varchar' => "''",
+    ];
+
     /**
      * Get query or command, converting "ALTER TABLE " statements to on-line commands/queries.
      *
@@ -57,6 +73,12 @@ class PtOnlineSchemaChange implements StrategyInterface
                 ["default '0'", "default '1'"],
                 ['default 0', 'default 1'], $changes);
 
+            if (! empty($alter_parts)
+                && config('online-migrator.ptosc-auto-defaults')
+            ) {
+                $changes = static::getChangesWithAutoDefaults($changes);
+            }
+
             // TODO: Fix dropping FKs by prefixing constraint name with '_' or
             // '__' if already starts with '_' (quirk in PTOSC).
 
@@ -93,6 +115,38 @@ class PtOnlineSchemaChange implements StrategyInterface
         }
 
         return $query_or_command_str;
+    }
+
+    private static function getChangesWithAutoDefaults(string $raw_changes) : string
+    {
+        $changes = [];
+
+        // Cannot do simple comma split because of types like "double(10, 5)".
+        // CONSIDER: More robust parsing for split.
+        foreach (preg_split('/,\s+(?!\d+\))/iu', $raw_changes) as $raw_change) {
+            $change = $raw_change;
+            // CONSIDER: Detecting column changes and auto-appending default
+            // when changed from nullable to not-null and doesn't have default.
+            if (preg_match('/\A\s*ADD\s+(COLUMN\s+)?`?[^`\s+]+`?\s+([^`\s+]+)(.*?\bNOT\s+NULL\b.*)/imu', $change, $add_parts)
+                && ! preg_match('/\bDEFAULT\s+[^\s]+\b/imu', $add_parts[3])
+            ) {
+                $column_type = strtolower(
+                    trim(
+                        preg_replace(
+                            '/(^BIG|^MEDIUM|^SMALL|^TINY|(INT)EGER|\(.*$)/iu',
+                            '\2',
+                            $add_parts[2]
+                        )
+                    )
+                );
+                if (isset(static::AUTO_DEFAULTS[$column_type])) {
+                    $change .= ' DEFAULT ' . static::AUTO_DEFAULTS[$column_type];
+                }
+            }
+            $changes[] = $change;
+        }
+
+        return implode(', ', $changes);
     }
 
     /**
