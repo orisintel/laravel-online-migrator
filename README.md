@@ -36,6 +36,14 @@ If not using discovery then add the provider to `config/app.php`:
     OrisIntel\OnlineMigrator\OnlineMigratorServiceProvider::class,
 ```
 
+If changing tables with `enum` columns consider working around "Unknown database
+type enum requested" by tweaking `config/online-migrator.php`:
+``` php
+  'doctrine-enum-mapping' => env('DOCTRINE_ENUM_MAPPING', 'string'),
+```
+or `.env` with `DOCTRINE_ENUM_MAPPING=string`
+
+
 ## Usage
 
 Run Artisan's migrate to apply migrations online*:

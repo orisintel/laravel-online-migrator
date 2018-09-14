@@ -35,6 +35,15 @@ class OnlineMigrator extends Migrator
         );
         // END: Copied from parent.
 
+        // CONSIDER: Moving to separate package since this isn't directly
+        // related to online migrations.
+        $enum_mapping = config('online-migrator.doctrine-enum-mapping');
+        if ($enum_mapping) {
+            $db->getDoctrineSchemaManager()
+                ->getDatabasePlatform()
+                ->registerDoctrineTypeMapping('enum', $enum_mapping);
+        }
+
         if (! self::isOnlineAppropriate($migration, $method, $db->getDatabaseName())) {
             return parent::getQueries($migration, $method);
         }
