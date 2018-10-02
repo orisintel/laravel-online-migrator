@@ -48,4 +48,17 @@ return [
     */
 
     'ptosc-options' => env('PTOSC_OPTIONS'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Register Doctrine Enum Type
+    |--------------------------------------------------------------------------
+    |
+    | Works around altering non-enum columns blocked by quirk in Doctrine by
+    | mapping enums to 'string'. Using 'string' does not allow changing enums
+    | themselves with Eloquent like `->enum(...)->change()`. Can pass along any
+    | truthy type name in case there are better alternatives.
+    |
+    */
+    'doctrine-enum-mapping' => env('DOCTRINE_ENUM_MAPPING'),
 ];
