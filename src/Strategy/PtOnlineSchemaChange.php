@@ -123,15 +123,14 @@ class PtOnlineSchemaChange implements StrategyInterface
         if (! empty($option_csv)) {
             // CONSIDER: Formatting CLI options in config as native arrays
             // instead of CSV.
-            // CONSIDER: Supporting commas embedded in option value like '--option="red,blue"'
-            $raw_options = explode(',', $option_csv);
+            $raw_options = preg_split('/[, ]+(?=--)/', $option_csv);
             foreach ($raw_options as $raw_option) {
                 if (false === strpos($raw_option, '--', 0)) {
                     throw new \InvalidArgumentException(
                         'Only double dashed (full) options supported '
                         . var_export($raw_option, 1));
                 }
-                $option_root = preg_replace('/^--(no-?|=.*)?/', '', $raw_option);
+                $option_root = preg_replace('/^--(no-?|[= ].*)?/', '', $raw_option);
                 $options[$option_root] = $raw_option;
             }
         }
