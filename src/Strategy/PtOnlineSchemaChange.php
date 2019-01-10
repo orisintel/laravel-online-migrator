@@ -28,12 +28,12 @@ class PtOnlineSchemaChange implements StrategyInterface
         $table_name = null;
         $changes = null;
 
-        $alter_re = '/\A\s*ALTER\s+TABLE\s+`?([^\s`]+)`?\s*/imu';
+        $alter_re = '/\A\s*ALTER\s+TABLE\s+[`"]?([^\s`"]+)[`"]?\s*/imu';
         $create_re = '/\A\s*CREATE\s+'
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
-            . 'INDEX\s+`?([^`\s]+)`?\s+ON\s+`?([^`\s]+)`?\s+?/imu';
+            . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+[`"]?([^`"\s]+)[`"]?\s+?/imu';
         $drop_re = '/\A\s*DROP\s+'
-            . 'INDEX\s+`?([^`\s]+)`?\s+ON\s+`?([^`\s]+)`?\s*?/imu';
+            . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+[`"]?([^`"\s]+)[`"]?\s*?/imu';
         if (preg_match($alter_re, $query_or_command_str, $alter_parts)) {
             $table_name = $alter_parts[1];
             // Changing query so pretendToRun output will match command.
@@ -59,7 +59,7 @@ class PtOnlineSchemaChange implements StrategyInterface
 
             // Dropping FKs with PTOSC requires prefixing constraint name with
             // '_'; adding another if it already starts with '_'.
-            $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+`?)([^`\s]+)/imu', '\01_\02', $changes);
+            $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+[`"]?)([^`"\s]+)/imu', '\01_\02', $changes);
 
             // Keeping defaults here so overriding one does not discard all, as
             // would happen if left to `config/online-migrator.php`.
