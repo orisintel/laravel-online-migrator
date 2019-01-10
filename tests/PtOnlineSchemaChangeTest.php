@@ -11,6 +11,15 @@ class PtOnlineSchemaChangeTest extends TestCase
     // getting output from $this->artisan, Artisan::call, and console Kernel
     // aren't working yet, and loadMigrationsFrom is opaque.
 
+    public function test_getQueryOrCommand_rewritesDropForeignKey()
+    {
+        $query = ['query' => 'ALTER TABLE t DROP FOREIGN KEY fk, DROP FOREIGN KEY fk2'];
+
+        $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
+        $this->assertStringStartsWith('pt-online-schema-change', $command);
+        $this->assertContains("'DROP FOREIGN KEY _fk, DROP FOREIGN KEY _fk2", $command);
+    }
+
     public function test_getQueryOrCommand_rewritesDropIndex()
     {
         $query = ['query' => 'DROP INDEX idx ON test'];
