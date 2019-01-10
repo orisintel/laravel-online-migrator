@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'enabled' => env('USE_ONLINE_MIGRATOR'),
+    'enabled' => env('ONLINE_MIGRATOR'),
 
     /*
     |--------------------------------------------------------------------------
