@@ -1,6 +1,6 @@
 <?php
 
-namespace OrisIntel\OnlineMigrator\Traits;
+namespace OrisIntel\OnlineMigrator;
 
 // CONSIDER: Renaming "OnlineCannotMigrateUp"
 trait OnlineIncompatibleWithUp
