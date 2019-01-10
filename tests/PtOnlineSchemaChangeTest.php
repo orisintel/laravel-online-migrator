@@ -30,6 +30,15 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->assertNotContains(' ON test ', $command);
     }
 
+    public function test_getQueryOrCommand_supportsAnsiQuotes()
+    {
+        $query = ['query' => 'ALTER TABLE "t" ADD "c" INT, DROP "c2", DROP FOREIGN KEY "fk"'];
+
+        $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
+        $this->assertStringStartsWith('pt-online-schema-change', $command);
+        $this->assertContains("'ADD \"c\" INT, DROP \"c2\", DROP FOREIGN KEY \"_fk\"", $command);
+    }
+
     public function test_migrate_addsColumn()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-column');
