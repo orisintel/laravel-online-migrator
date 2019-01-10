@@ -106,7 +106,7 @@ class PtOnlineSchemaChange implements StrategyInterface
      *
      * @return string
      */
-    private static function getOptionsForShell(?string $option_csv, array $defaults = []) : string
+    public static function getOptionsForShell(?string $option_csv, array $defaults = []) : string
     {
         $return = '';
 
@@ -131,7 +131,7 @@ class PtOnlineSchemaChange implements StrategyInterface
                         'Only double dashed (full) options supported '
                         . var_export($raw_option, 1));
                 }
-                $option_root = preg_replace('/^--(no-?|[= ].*)?/', '', $raw_option);
+                $option_root = preg_replace('/(^--(no-?)?|[= ].*)?/', '', $raw_option);
                 $options[$option_root] = $raw_option;
             }
         }
