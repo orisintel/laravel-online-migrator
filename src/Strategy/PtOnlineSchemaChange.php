@@ -57,8 +57,9 @@ class PtOnlineSchemaChange implements StrategyInterface
                 ["default '0'", "default '1'"],
                 ['default 0', 'default 1'], $changes);
 
-            // TODO: Fix dropping FKs by prefixing constraint name with '_' or
-            // '__' if already starts with '_' (quirk in PTOSC).
+            // Dropping FKs with PTOSC requires prefixing constraint name with
+            // '_'; adding another if it already starts with '_'.
+            $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+`?)([^`\s]+)/imu', '\01_\02', $changes);
 
             // Keeping defaults here so overriding one does not discard all, as
             // would happen if left to `config/online-migrator.php`.
