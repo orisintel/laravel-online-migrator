@@ -11,6 +11,13 @@ class PtOnlineSchemaChangeTest extends TestCase
     // getting output from $this->artisan, Artisan::call, and console Kernel
     // aren't working yet, and loadMigrationsFrom is opaque.
 
+    public function test_getOptionsForShell_overridesDefault()
+    {
+        $this->assertEquals(
+            ' --alter-foreign-keys-method=none',
+            PtOnlineSchemaChange::getOptionsForShell('--alter-foreign-keys-method=none', ['--alter-foreign-keys-method=auto']));
+    }
+
     public function test_getQueryOrCommand_rewritesDropForeignKey()
     {
         $query = ['query' => 'ALTER TABLE t DROP FOREIGN KEY fk, DROP FOREIGN KEY fk2'];
