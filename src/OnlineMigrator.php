@@ -2,6 +2,7 @@
 
 namespace OrisIntel\OnlineMigrator;
 
+use Illuminate\Database\Connection;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Migrations\Migrator;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -35,14 +36,9 @@ class OnlineMigrator extends Migrator
         );
         // END: Copied from parent.
 
-        // CONSIDER: Moving to separate package since this isn't directly
-        // related to online migrations.
-        $enum_mapping = config('online-migrator.doctrine-enum-mapping');
-        if ($enum_mapping) {
-            $db->getDoctrineSchemaManager()
-                ->getDatabasePlatform()
-                ->registerDoctrineTypeMapping('enum', $enum_mapping);
-        }
+        // This should allow "--pretend" to work when changing any columns on
+        // tables with enums.
+        $this->registerEnumMapping($db);
 
         if (! self::isOnlineAppropriate($migration, $method, $db->getDatabaseName())) {
             return parent::getQueries($migration, $method);
@@ -85,6 +81,10 @@ class OnlineMigrator extends Migrator
         );
         // END: Copied from parent.
 
+        // Map enum even when not using Online Migrator to workaround Doctrine
+        // blocking changes to any columns with tables containing enums.
+        $this->registerEnumMapping($connection);
+
         if (! self::isOnlineAppropriate($migration, $method, $connection->getDatabaseName())) {
             parent::runMigration($migration, $method);
 
@@ -124,6 +124,18 @@ class OnlineMigrator extends Migrator
             ),
             '\\OrisIntel\\OnlineMigrator\\Strategy\\'
         );
+    }
+
+    private function registerEnumMapping(Connection $db) : void
+    {
+        // CONSIDER: Moving to separate package since this isn't directly
+        // related to online migrations.
+        $enum_mapping = config('online-migrator.doctrine-enum-mapping');
+        if ($enum_mapping) {
+            $db->getDoctrineSchemaManager()
+                ->getDatabasePlatform()
+                ->registerDoctrineTypeMapping('enum', $enum_mapping);
+        }
     }
 
     /**
