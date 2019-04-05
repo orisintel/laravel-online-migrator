@@ -125,6 +125,19 @@ class PtOnlineSchemaChangeTest extends TestCase
         \DB::table('test_om_with_primary')->insert(['name' => 'alice']);
     }
 
+    public function test_migrate_combinesAdjacentDdl()
+    {
+        $queries = [
+            ['query' => 'ALTER TABLE "t" ADD "c" INT'],
+            ['query' => 'ALTER TABLE "t" DROP "c2"'],
+        ];
+
+        $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
+        $this->assertCount(1, $converted);
+        $this->assertStringStartsWith('pt-online-schema-change', $converted[0]['query']);
+        $this->assertContains("'ADD \"c\" INT, DROP \"c2\"", $converted[0]['query']);
+    }
+
     public function test_migrate_dropsIndexWithSql()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');

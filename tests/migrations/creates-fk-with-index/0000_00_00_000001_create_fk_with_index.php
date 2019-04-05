@@ -2,6 +2,8 @@
 
 class CreateFkWithIndex extends \Illuminate\Database\Migrations\Migration
 {
+    use \OrisIntel\OnlineMigrator\CombineIncompatible;
+
     public function up()
     {
         Schema::create('test_om_fk_with_index', function (\Illuminate\Database\Schema\Blueprint $table) {

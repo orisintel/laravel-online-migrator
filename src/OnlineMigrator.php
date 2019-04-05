@@ -58,11 +58,8 @@ class OnlineMigrator extends Migrator
         // END: Copied from parent.
 
         $strategy = self::getStrategy($migration);
-        foreach ($queries as &$query) {
-            $query['query'] = $strategy::getQueryOrCommand($query, $db);
-        }
 
-        return $queries;
+        return $strategy::getQueriesAndCommands($queries, $db, $migration->combineIncompatible ?? false);
     }
 
     /**

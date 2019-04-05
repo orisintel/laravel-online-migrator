@@ -4,7 +4,7 @@ namespace OrisIntel\OnlineMigrator\Strategy;
 
 use Illuminate\Database\Connection;
 
-class InnodbOnlineDdl implements StrategyInterface
+final class InnodbOnlineDdl implements StrategyInterface
 {
     private const INPLACE_INCOMPATIBLE = [
         'ALTER\s+TABLE\s+`?[^`\s]+`?\s+(CHANGE|MODIFY)', // CONSIDER: Only when type changes.
@@ -14,14 +14,32 @@ class InnodbOnlineDdl implements StrategyInterface
     ];
 
     /**
+     * Get queries and commands, converting "ALTER TABLE " statements to on-line commands/queries.
+     *
+     * @param array $queries
+     * @param array $connection
+     * @param bool  $combineIncompatible
+     *
+     * @return array of queries and--where supported--commands
+     */
+    public static function getQueriesAndCommands(array &$queries, Connection $connection, bool $combineIncompatible = false) : array
+    {
+        foreach ($queries as &$query) {
+            $query['query'] = self::getQueryOrCommand($query, $connection);
+        }
+
+        return $queries;
+    }
+
+    /**
      * Get query or command, converting "ALTER TABLE " statements to on-line commands/queries.
      *
      * @param array $query
-     * @param array $db_config
+     * @param array $connection
      *
      * @return string
      */
-    public static function getQueryOrCommand(array &$query, Connection $connection)
+    public static function getQueryOrCommand(array &$query, Connection $connection) : string
     {
         $query_or_command_str = rtrim($query['query'], '; ');
 
@@ -106,7 +124,7 @@ class InnodbOnlineDdl implements StrategyInterface
      *
      * @return void
      */
-    public static function runQueryOrCommand(array &$query, Connection $connection)
+    public static function runQueryOrCommand(array &$query, Connection $connection) : void
     {
         // Always run unchanged query since this strategy does not need to
         // execute commands of other tools.

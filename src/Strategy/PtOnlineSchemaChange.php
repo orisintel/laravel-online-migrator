@@ -10,21 +10,107 @@ namespace OrisIntel\OnlineMigrator\Strategy;
 
 use Illuminate\Database\Connection;
 
-class PtOnlineSchemaChange implements StrategyInterface
+final class PtOnlineSchemaChange implements StrategyInterface
 {
     /**
-     * Get query or command, converting "ALTER TABLE " statements to on-line commands/queries.
+     * Get queries and commands, converting "ALTER TABLE " statements to on-line commands/queries.
      *
-     * @param array $query
-     * @param array $db_config
+     * @param array $queries
+     * @param array $connection
+     * @param bool  $combineIncompatible
      *
-     * @return string
+     * @return array of queries and--where supported--commands
      */
-    public static function getQueryOrCommand(array &$query, Connection $connection)
+    public static function getQueriesAndCommands(array &$queries, Connection $connection, bool $combineIncompatible = false) : array
     {
-        $query_or_command_str = $query['query'];
-        // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
+        /*** @var array like ['table_name' => string, 'changes' => array]. */
+        $combining = [];
+        $queries_original_count = count($queries);
+        $queries_commands = [];
+        for ($i = 0; $i < $queries_original_count; $i += 1) {
+            if (
+                ! $combineIncompatible
+                && $combinable = self::getCombinableTableAndChanges($queries[$i])
+            ) {
+                // First adjacent combinable.
+                if (empty($combining)) {
+                    $combining = $combinable;
+                    continue;
+                }
 
+                // Different table, so store previous combinables.
+                if ($combining['table_name'] != $combinable['table_name']) {
+                    $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
+                    $combining = $combinable;
+                    continue;
+                }
+
+                // Same table, so combine changes into comma-separated string.
+                $combining['changes'] =
+                    (! empty($combining['changes']) ? $combining['changes'] . ', ' : '')
+                    . $combinable['changes'];
+                continue;
+            }
+
+            // Not combinable, so store any previous combinables.
+            if (! empty($combining)) {
+                $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
+                $combining = [];
+            }
+
+            $queries[$i]['query'] = self::getQueryOrCommand($queries[$i], $connection);
+            $queries_commands[] = $queries[$i];
+        }
+
+        // Store residual combinables so they aren't lost.
+        if (! empty($combining)) {
+            $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
+        }
+
+        return $queries_commands;
+    }
+
+    /**
+     * @param array      $combining like ['table_name' => string, 'changes' => string]
+     * @param Connection $connection
+     *
+     * @return array like ['query' => string, 'binding' => array, 'time' => float].
+     */
+    private static function getCombinedWithBindings(array $combining, Connection $connection) : array
+    {
+        // TODO: Restore original table-name escapes.
+        $query_bindings_time = [
+            'query' => 'ALTER TABLE ' . $combining['table_name'] . ' ' . $combining['changes'],
+            'bindings' => [],
+            'time' => 0.0,
+        ];
+        $query_bindings_time['query'] = self::getQueryOrCommand($query_bindings_time, $connection);
+
+        return $query_bindings_time;
+    }
+
+    /**
+     * @return array like 'table_name' => string, 'changes' => string].
+     */
+    public static function getCombinableTableAndChanges(array $query) : array
+    {
+        // CONSIDER: Combining if all named or all unnamed.
+        if (! empty($query['bindings'])) {
+            return [];
+        }
+
+        $parts = self::getTableAndChanges($query['query']);
+
+        // TODO: Only those known to be combinable.
+        if (preg_match('/^\s*(ADD|DROP)?\b/imu', $parts['changes'])) {
+            return $parts;
+        }
+
+        return [];
+    }
+
+    private static function getTableAndChanges(string $query_or_command_str) : array
+    {
         $table_name = null;
         $changes = null;
 
@@ -60,7 +146,29 @@ class PtOnlineSchemaChange implements StrategyInterface
             // Dropping FKs with PTOSC requires prefixing constraint name with
             // '_'; adding another if it already starts with '_'.
             $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+[`"]?)([^`"\s]+)/imu', '\01_\02', $changes);
+        }
 
+        return compact('table_name', 'changes');
+    }
+
+    /**
+     * Get query or command, converting "ALTER TABLE " statements to on-line commands/queries.
+     *
+     * @param array $query
+     * @param array $connection
+     *
+     * @return string
+     */
+    public static function getQueryOrCommand(array &$query, Connection $connection) : string
+    {
+        $query_or_command_str = $query['query'];
+        // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
+
+        $parts = self::getTableAndChanges($query_or_command_str);
+        $table_name = $parts['table_name'];
+        $changes = $parts['changes'];
+
+        if ($table_name && $parts) {
             // Keeping defaults here so overriding one does not discard all, as
             // would happen if left to `config/online-migrator.php`.
             $ptosc_defaults = [
@@ -153,7 +261,7 @@ class PtOnlineSchemaChange implements StrategyInterface
      *
      * @return void
      */
-    public static function runQueryOrCommand(array &$query, Connection $connection)
+    public static function runQueryOrCommand(array &$query, Connection $connection) : void
     {
         // CONSIDER: Using unmodified migration code when small and not
         // currently locked table.
