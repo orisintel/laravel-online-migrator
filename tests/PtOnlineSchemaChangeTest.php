@@ -136,14 +136,19 @@ class PtOnlineSchemaChangeTest extends TestCase
     public function test_migrate_combinesAdjacentDdl()
     {
         $queries = [
-            ['query' => 'ALTER TABLE "t" ADD "c" INT'],
-            ['query' => 'ALTER TABLE "t" DROP "c2"'],
+            ['query' => 'ALTER TABLE t ADD c INT'],
+            ['query' => 'ALTER TABLE t ALTER c2 SET DEFAULT 0'],
+            ['query' => 'ALTER TABLE t DROP c3'],
+            ['query' => 'ALTER TABLE t CHANGE c4 c4 TEXT'],
+            ['query' => 'ALTER TABLE t2 ADD c INT'],
+            ['query' => 'ALTER TABLE t2 ADD c2 INT'],
         ];
 
         $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
-        $this->assertCount(1, $converted);
+        $this->assertCount(2, $converted);
         $this->assertStringStartsWith('pt-online-schema-change', $converted[0]['query']);
-        $this->assertContains("'ADD \"c\" INT, DROP \"c2\"", $converted[0]['query']);
+        $this->assertContains('ADD c INT, ALTER c2 SET DEFAULT 0, DROP c3, CHANGE c4 c4 TEXT', $converted[0]['query']);
+        $this->assertContains('ADD c INT, ADD c2 INT', $converted[1]['query']);
     }
 
     public function test_migrate_doesNotCombineUnsupportedSql()

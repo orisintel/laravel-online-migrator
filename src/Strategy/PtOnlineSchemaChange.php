@@ -38,17 +38,17 @@ final class PtOnlineSchemaChange implements StrategyInterface
                     continue;
                 }
 
-                // Different table, so store previous combinables.
-                if ($combining['table_name'] != $combinable['table_name']) {
-                    $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
-                    $combining = [];
+                // Same table, so combine changes into comma-separated string.
+                if ($combining['table_name'] === $combinable['table_name']) {
+                    $combining['changes'] =
+                        (!empty($combining['changes']) ? $combining['changes'] . ', ' : '')
+                        . $combinable['changes'];
                     continue;
                 }
 
-                // Same table, so combine changes into comma-separated string.
-                $combining['changes'] =
-                    (! empty($combining['changes']) ? $combining['changes'] . ', ' : '')
-                    . $combinable['changes'];
+                // Different table, so store previous combinables and reset.
+                $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
+                $combining = $combinable;
                 continue;
             }
 
@@ -100,8 +100,8 @@ final class PtOnlineSchemaChange implements StrategyInterface
 
         $parts = self::getOnlineableParts($query['query']);
 
-        // TODO: Only those known to be combinable.
-        if (preg_match('/\A\s*(ADD|DROP|REMOVE PARTITIONING)\b/imu', $parts['changes'] ?? '')) {
+        // CONSIDER: Supporting combinable partition options.
+        if (preg_match('/\A\s*(ADD|ALTER|DROP|CHANGE)\b/imu', $parts['changes'] ?? '')) {
             return $parts;
         }
 
