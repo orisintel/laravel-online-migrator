@@ -101,7 +101,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
         $parts = self::getOnlineableParts($query['query']);
 
         // TODO: Only those known to be combinable.
-        if (preg_match('/\A\s*(ADD|DROP|REMOVE PARTITIONING)\b/imu', $parts['changes'])) {
+        if (preg_match('/\A\s*(ADD|DROP|REMOVE PARTITIONING)\b/imu', $parts['changes'] ?? '')) {
             return $parts;
         }
 
@@ -130,6 +130,11 @@ final class PtOnlineSchemaChange implements StrategyInterface
             // Changing query so pretendToRun output will match command.
             // CONSIDER: Separate index and overriding pretendToRun instead.
             $changes = preg_replace($alter_re, '', $query_string);
+
+            // Alter-table-rename-to-as is not supported by PTOSC.
+            if (preg_match('/\A\s*RENAME(\s+(TO|AS))?\s+[^\s]+\s*(;|\z)/imu', $changes)) {
+                return [];
+            }
         } elseif (preg_match($create_re, $query_string, $create_parts)) {
             $index_name = $create_parts[3];
             $table_name = $create_parts[4];
@@ -140,23 +145,25 @@ final class PtOnlineSchemaChange implements StrategyInterface
             $table_name = $drop_parts[2];
             $changes = "DROP INDEX $index_name "
                 . preg_replace($drop_re, '', $query_string);
-        }
-
-        if ($table_name && $changes) {
-            // HACK: Workaround PTOSC quirk with escaping and defaults.
-            $changes = str_replace(
-                ["default '0'", "default '1'"],
-                ['default 0', 'default 1'], $changes);
-
-            // Dropping FKs with PTOSC requires prefixing constraint name with
-            // '_'; adding another if it already starts with '_'.
-            $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+[`"]?)([^`"\s]+)/imu', '\01_\02', $changes);
+        } else {
+            // Query not supported by PTOSC.
+            return [];
         }
 
         $escape = preg_match('/^([`"])/u', $table_name, $m) ? $m[1] : null;
+        $table_name = trim($table_name, '`"');
+
+        // HACK: Workaround PTOSC quirk with escaping and defaults.
+        $changes = str_replace(
+            ["default '0'", "default '1'"],
+            ['default 0', 'default 1'], $changes);
+
+        // Dropping FKs with PTOSC requires prefixing constraint name with
+        // '_'; adding another if it already starts with '_'.
+        $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+[`"]?)([^`"\s]+)/imu', '\01_\02', $changes);
 
         return [
-            'table_name' => trim($table_name, '`"'),
+            'table_name' => $table_name,
             'changes' => $changes,
             'escape' => $escape,
         ];
@@ -172,47 +179,50 @@ final class PtOnlineSchemaChange implements StrategyInterface
      */
     public static function getQueryOrCommand(array &$query, Connection $connection) : string
     {
-        $query_or_command_str = $query['query'];
         // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
 
-        $parts = self::getOnlineableParts($query_or_command_str);
-        $table_name = $parts['table_name'];
-        $changes = $parts['changes'];
+        $onlineable = self::getOnlineableParts($query['query']);
 
-        if ($table_name && $changes) {
-            // Keeping defaults here so overriding one does not discard all, as
-            // would happen if left to `config/online-migrator.php`.
-            $ptosc_defaults = [
-                '--alter-foreign-keys-method=auto',
-                '--no-check-alter', // ASSUMES: Users accept risks w/RENAME.
-                // ASSUMES: All are known to be unique.
-                // CONSIDER: Extracting/re-creating automatic uniqueness checks
-                // and running them here in PHP beforehand.
-                '--no-check-unique-key-change',
-            ];
-            $ptosc_options_str = self::getOptionsForShell(
-                config('online-migrator.ptosc-options'), $ptosc_defaults);
-
-            if (false !== strpos($ptosc_options_str, '--dry-run')) {
-                throw new \InvalidArgumentException(
-                    'Cannot run PTOSC with --dry-run because it would incompletely change the database. Remove from PTOSC_OPTIONS.');
-            }
-
-            $db_config = $connection->getConfig();
-            $query_or_command_str = 'pt-online-schema-change --alter '
-                . escapeshellarg($changes)
-                . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $table_name)
-                . ' --host ' . escapeshellarg($db_config['host'])
-                . ' --port ' . escapeshellarg($db_config['port'])
-                . ' --user ' . escapeshellarg($db_config['username'])
-                // CONSIDER: Redacting password during pretend
-                . ' --password ' . escapeshellarg($db_config['password'])
-                . $ptosc_options_str
-                . ' --execute'
-                . ' 2>&1';
+        // Leave unchanged when not supported by PTOSC.
+        if (
+            empty($onlineable['table_name'])
+            || empty($onlineable['changes'])
+        ) {
+            return $query['query'];
         }
 
-        return $query_or_command_str;
+        // Keeping defaults here so overriding one does not discard all, as
+        // would happen if left to `config/online-migrator.php`.
+        $ptosc_defaults = [
+            '--alter-foreign-keys-method=auto',
+            '--no-check-alter', // ASSUMES: Users accept risks w/RENAME.
+            // ASSUMES: All are known to be unique.
+            // CONSIDER: Extracting/re-creating automatic uniqueness checks
+            // and running them here in PHP beforehand.
+            '--no-check-unique-key-change',
+        ];
+        $ptosc_options_str = self::getOptionsForShell(
+            config('online-migrator.ptosc-options'), $ptosc_defaults);
+
+        if (false !== strpos($ptosc_options_str, '--dry-run')) {
+            throw new \InvalidArgumentException(
+                'Cannot run PTOSC with --dry-run because it would incompletely change the database. Remove from PTOSC_OPTIONS.');
+        }
+
+        $db_config = $connection->getConfig();
+        $command = 'pt-online-schema-change --alter '
+            . escapeshellarg($onlineable['changes'])
+            . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $onlineable['table_name'])
+            . ' --host ' . escapeshellarg($db_config['host'])
+            . ' --port ' . escapeshellarg($db_config['port'])
+            . ' --user ' . escapeshellarg($db_config['username'])
+            // CONSIDER: Redacting password during pretend
+            . ' --password ' . escapeshellarg($db_config['password'])
+            . $ptosc_options_str
+            . ' --execute'
+            . ' 2>&1';
+
+        return $command;
     }
 
     /**

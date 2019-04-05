@@ -18,6 +18,14 @@ class PtOnlineSchemaChangeTest extends TestCase
             PtOnlineSchemaChange::getOptionsForShell('--alter-foreign-keys-method=none', ['--alter-foreign-keys-method=auto']));
     }
 
+    public function test_getQueryOrCommand_doesntRewriteTableRename()
+    {
+        $query = ['query' => 'ALTER TABLE `t` RENAME `t2`'];
+
+        $query_or_command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
+        $this->assertEquals($query['query'], $query_or_command);
+    }
+
     public function test_getQueryOrCommand_rewritesDropForeignKey()
     {
         $query = ['query' => 'ALTER TABLE t DROP FOREIGN KEY fk, DROP FOREIGN KEY fk2'];
