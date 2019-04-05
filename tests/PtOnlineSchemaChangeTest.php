@@ -138,6 +138,18 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->assertContains("'ADD \"c\" INT, DROP \"c2\"", $converted[0]['query']);
     }
 
+    public function test_migrate_doesNotCombineUnsupportedSql()
+    {
+        $queries = [
+            ['query' => 'ALTER TABLE t ADD c INT'],
+            ['query' => 'ALTER TABLE t EXCHANGE PARTITION p WITH TABLE t2'],
+        ];
+
+        $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
+        $this->assertCount(2, $converted);
+        $this->assertNotContains(", EXCHANGE PARTITION", $converted[0]['query']);
+    }
+
     public function test_migrate_dropsIndexWithSql()
     {
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');

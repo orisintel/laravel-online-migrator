@@ -25,12 +25,12 @@ final class PtOnlineSchemaChange implements StrategyInterface
     {
         /*** @var array like ['table_name' => string, 'changes' => array]. */
         $combining = [];
-        $queries_original_count = count($queries);
+
         $queries_commands = [];
-        for ($i = 0; $i < $queries_original_count; $i += 1) {
+        foreach ($queries as &$query) {
             if (
                 ! $combineIncompatible
-                && $combinable = self::getCombinableTableAndChanges($queries[$i])
+                && $combinable = self::getCombinableParts($query)
             ) {
                 // First adjacent combinable.
                 if (empty($combining)) {
@@ -41,7 +41,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
                 // Different table, so store previous combinables.
                 if ($combining['table_name'] != $combinable['table_name']) {
                     $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
-                    $combining = $combinable;
+                    $combining = [];
                     continue;
                 }
 
@@ -58,8 +58,8 @@ final class PtOnlineSchemaChange implements StrategyInterface
                 $combining = [];
             }
 
-            $queries[$i]['query'] = self::getQueryOrCommand($queries[$i], $connection);
-            $queries_commands[] = $queries[$i];
+            $query['query'] = self::getQueryOrCommand($query, $connection);
+            $queries_commands[] = $query;
         }
 
         // Store residual combinables so they aren't lost.
@@ -78,9 +78,8 @@ final class PtOnlineSchemaChange implements StrategyInterface
      */
     private static function getCombinedWithBindings(array $combining, Connection $connection) : array
     {
-        // TODO: Restore original table-name escapes.
         $query_bindings_time = [
-            'query' => 'ALTER TABLE ' . $combining['table_name'] . ' ' . $combining['changes'],
+            'query' => "ALTER TABLE $combining[escape]$combining[table_name]$combining[escape] $combining[changes]",
             'bindings' => [],
             'time' => 0.0,
         ];
@@ -92,49 +91,55 @@ final class PtOnlineSchemaChange implements StrategyInterface
     /**
      * @return array like 'table_name' => string, 'changes' => string].
      */
-    public static function getCombinableTableAndChanges(array $query) : array
+    public static function getCombinableParts(array $query) : array
     {
         // CONSIDER: Combining if all named or all unnamed.
         if (! empty($query['bindings'])) {
             return [];
         }
 
-        $parts = self::getTableAndChanges($query['query']);
+        $parts = self::getOnlineableParts($query['query']);
 
         // TODO: Only those known to be combinable.
-        if (preg_match('/^\s*(ADD|DROP)?\b/imu', $parts['changes'])) {
+        if (preg_match('/\A\s*(ADD|DROP|REMOVE PARTITIONING)\b/imu', $parts['changes'])) {
             return $parts;
         }
 
         return [];
     }
 
-    private static function getTableAndChanges(string $query_or_command_str) : array
+    /**
+     * @param string $query_string
+     *
+     * @return array like ['table_name' => ?string, 'changes' => ?string].
+     */
+    private static function getOnlineableParts(string $query_string) : array
     {
         $table_name = null;
         $changes = null;
+        $escape = null;
 
-        $alter_re = '/\A\s*ALTER\s+TABLE\s+[`"]?([^\s`"]+)[`"]?\s*/imu';
+        $alter_re = '/\A\s*ALTER\s+TABLE\s+([`"]?[^\s`"]+[`"]?)\s*/imu';
         $create_re = '/\A\s*CREATE\s+'
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
-            . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+[`"]?([^`"\s]+)[`"]?\s+?/imu';
+            . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+([`"]?[^`"\s]+[`"]?)\s+?/imu';
         $drop_re = '/\A\s*DROP\s+'
-            . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+[`"]?([^`"\s]+)[`"]?\s*?/imu';
-        if (preg_match($alter_re, $query_or_command_str, $alter_parts)) {
+            . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+([`"]?[^`"\s]+[`"]?)\s*?/imu';
+        if (preg_match($alter_re, $query_string, $alter_parts)) {
             $table_name = $alter_parts[1];
             // Changing query so pretendToRun output will match command.
             // CONSIDER: Separate index and overriding pretendToRun instead.
-            $changes = preg_replace($alter_re, '', $query_or_command_str);
-        } elseif (preg_match($create_re, $query_or_command_str, $create_parts)) {
+            $changes = preg_replace($alter_re, '', $query_string);
+        } elseif (preg_match($create_re, $query_string, $create_parts)) {
             $index_name = $create_parts[3];
             $table_name = $create_parts[4];
             $changes = "ADD $create_parts[2] INDEX $index_name "
-                . preg_replace($create_re, '', $query_or_command_str);
-        } elseif (preg_match($drop_re, $query_or_command_str, $drop_parts)) {
+                . preg_replace($create_re, '', $query_string);
+        } elseif (preg_match($drop_re, $query_string, $drop_parts)) {
             $index_name = $drop_parts[1];
             $table_name = $drop_parts[2];
             $changes = "DROP INDEX $index_name "
-                . preg_replace($drop_re, '', $query_or_command_str);
+                . preg_replace($drop_re, '', $query_string);
         }
 
         if ($table_name && $changes) {
@@ -148,7 +153,13 @@ final class PtOnlineSchemaChange implements StrategyInterface
             $changes = preg_replace('/(\bDROP\s+FOREIGN\s+KEY\s+[`"]?)([^`"\s]+)/imu', '\01_\02', $changes);
         }
 
-        return compact('table_name', 'changes');
+        $escape = preg_match('/^([`"])/u', $table_name, $m) ? $m[1] : null;
+
+        return [
+            'table_name' => trim($table_name, '`"'),
+            'changes' => $changes,
+            'escape' => $escape,
+        ];
     }
 
     /**
@@ -164,11 +175,11 @@ final class PtOnlineSchemaChange implements StrategyInterface
         $query_or_command_str = $query['query'];
         // CONSIDER: Executing --dry-run (only during pretend?) first to validate all will work.
 
-        $parts = self::getTableAndChanges($query_or_command_str);
+        $parts = self::getOnlineableParts($query_or_command_str);
         $table_name = $parts['table_name'];
         $changes = $parts['changes'];
 
-        if ($table_name && $parts) {
+        if ($table_name && $changes) {
             // Keeping defaults here so overriding one does not discard all, as
             // would happen if left to `config/online-migrator.php`.
             $ptosc_defaults = [
