@@ -7,14 +7,15 @@ use Illuminate\Database\Connection;
 interface StrategyInterface
 {
     /**
-     * Get query or command, converting "ALTER TABLE " statements to on-line commands/queries.
+     * Get queries and commands, converting "ALTER TABLE " statements to on-line commands/queries.
      *
-     * @param array $query
-     * @param array $db_config
+     * @param array $queries
+     * @param array $connection
+     * @param bool  $combineIncompatible
      *
-     * @return string
+     * @return array of queries and--where supported--commands
      */
-    public static function getQueryOrCommand(array &$query, Connection $connection);
+    public static function getQueriesAndCommands(array &$queries, Connection $connection, bool $combineIncompatible = false) : array;
 
     /**
      * Execute query or on-line command.
@@ -26,5 +27,5 @@ interface StrategyInterface
      *
      * @return void
      */
-    public static function runQueryOrCommand(array &$query, Connection $connection);
+    public static function runQueryOrCommand(array &$query, Connection $connection) : void;
 }

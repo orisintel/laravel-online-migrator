@@ -18,6 +18,14 @@ class PtOnlineSchemaChangeTest extends TestCase
             PtOnlineSchemaChange::getOptionsForShell('--alter-foreign-keys-method=none', ['--alter-foreign-keys-method=auto']));
     }
 
+    public function test_getQueryOrCommand_doesntRewriteTableRename()
+    {
+        $query = ['query' => 'ALTER TABLE `t` RENAME `t2`'];
+
+        $query_or_command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
+        $this->assertEquals($query['query'], $query_or_command);
+    }
+
     public function test_getQueryOrCommand_rewritesDropForeignKey()
     {
         $query = ['query' => 'ALTER TABLE t DROP FOREIGN KEY fk, DROP FOREIGN KEY fk2'];
@@ -123,6 +131,36 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->expectException(\PDOException::class);
         $this->expectExceptionCode(23000);
         \DB::table('test_om_with_primary')->insert(['name' => 'alice']);
+    }
+
+    public function test_migrate_combinesAdjacentDdl()
+    {
+        $queries = [
+            ['query' => 'ALTER TABLE t ADD c INT'],
+            ['query' => 'ALTER TABLE t ALTER c2 SET DEFAULT 0'],
+            ['query' => 'ALTER TABLE t DROP c3'],
+            ['query' => 'ALTER TABLE t CHANGE c4 c4 TEXT'],
+            ['query' => 'ALTER TABLE t2 ADD c INT'],
+            ['query' => 'ALTER TABLE t2 ADD c2 INT'],
+        ];
+
+        $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
+        $this->assertCount(2, $converted);
+        $this->assertStringStartsWith('pt-online-schema-change', $converted[0]['query']);
+        $this->assertContains('ADD c INT, ALTER c2 SET DEFAULT 0, DROP c3, CHANGE c4 c4 TEXT', $converted[0]['query']);
+        $this->assertContains('ADD c INT, ADD c2 INT', $converted[1]['query']);
+    }
+
+    public function test_migrate_doesNotCombineUnsupportedSql()
+    {
+        $queries = [
+            ['query' => 'ALTER TABLE t ADD c INT'],
+            ['query' => 'ALTER TABLE t EXCHANGE PARTITION p WITH TABLE t2'],
+        ];
+
+        $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
+        $this->assertCount(2, $converted);
+        $this->assertNotContains(", EXCHANGE PARTITION", $converted[0]['query']);
     }
 
     public function test_migrate_dropsIndexWithSql()

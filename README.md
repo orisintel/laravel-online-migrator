@@ -76,6 +76,13 @@ class MyMigration extends Migration
     use \OrisIntel\OnlineMigrator\InnodbOnlineDdl
 ```
 
+Do not combine queries for a migration when using PTOSC:
+``` php
+class MyMigration extends Migration
+{
+    use \OrisIntel\OnlineMigrator\CombineIncompatible
+```
+
 Adding foreign key with index to existing table:
 ``` php
 class MyColumnWithFkMigration extends Migration
