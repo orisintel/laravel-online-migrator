@@ -97,7 +97,7 @@ class MyColumnWithFkMigration extends Migration
             $table->foreign('my_fk_id')->references('id')->on('my_table2');
 ```
 
-### Limitations
+## Limitations
 - Only supports Mysql, specifically those versions supported by PTOSC v3
 - With PTOSC
   - Adding unique indexes may cause data loss unless tables are manually checked
@@ -128,11 +128,11 @@ Output is verbose because `passthru` is used to help debug production problems.
 Executing as `phpunit --testdox` may be more readable until the verbosity can be
 tamed.
 
-### Contributing
+## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-### Security
+## Security
 
 If you discover any security related issues, please email
 opensource@orisintel.com instead of using the issue tracker.
