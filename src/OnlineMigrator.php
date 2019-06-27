@@ -88,12 +88,14 @@ class OnlineMigrator extends Migrator
             return;
         }
 
-        // HACK: Output immediately instead of waiting for runner to flush notes since
-        // it can be slow and output is useful while in progress.
-        foreach ($this->notes as $note) {
-            $this->getOutput()->writeln($note);
+        if (5.7 >= floatval(app()->version())) {
+            // HACK: Output immediately instead of waiting for runner to flush notes since
+            // it can be slow and output is useful while in progress.
+            foreach ($this->notes as $note) {
+                $this->getOutput()->writeln($note);
+            }
+            $this->notes = [];
         }
-        $this->notes = [];
 
         // Instead of running the migration's callback unchanged, we need to
         // use the possibly reformatted query as a command.
