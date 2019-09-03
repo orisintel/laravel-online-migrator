@@ -5,6 +5,7 @@ namespace OrisIntel\OnlineMigrator;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Migrations\Migrator;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 class OnlineMigrator extends Migrator
@@ -116,8 +117,8 @@ class OnlineMigrator extends Migrator
 
     private function getStrategy($migration) : string
     {
-        return str_start(
-            studly_case(
+        return Str::start(
+            Str::studly(
                 $migration->onlineStrategy
                 ?? config('online-migrator.strategy', 'pt-online-schema-change')
             ),

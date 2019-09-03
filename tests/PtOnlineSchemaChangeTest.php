@@ -3,6 +3,7 @@
 namespace OrisIntel\OnlineMigrator\Tests;
 
 
+use Illuminate\Support\Arr;
 use OrisIntel\OnlineMigrator\Strategy\PtOnlineSchemaChange;
 
 class PtOnlineSchemaChangeTest extends TestCase
@@ -95,7 +96,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-fk-with-index');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om_fk_with_index')
             )->{"Create Table"}
         );
@@ -116,7 +117,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om')
             )->{"Create Table"}
         );
@@ -169,7 +170,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/drops-index-with-raw-sql');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om')
             )->{"Create Table"}
         );
