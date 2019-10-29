@@ -2,6 +2,7 @@
 
 namespace OrisIntel\OnlineMigrator\Tests;
 
+use Illuminate\Support\Arr;
 use OrisIntel\OnlineMigrator\Strategy\InnodbOnlineDdl;
 
 class InnodbOnlineDdlTest extends TestCase
@@ -159,7 +160,7 @@ class InnodbOnlineDdlTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-fk-with-index');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om_fk_with_index')
             )->{"Create Table"}
         );

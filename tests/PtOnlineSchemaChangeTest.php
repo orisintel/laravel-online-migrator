@@ -3,6 +3,7 @@
 namespace OrisIntel\OnlineMigrator\Tests;
 
 
+use Illuminate\Support\Arr;
 use OrisIntel\OnlineMigrator\Strategy\PtOnlineSchemaChange;
 
 class PtOnlineSchemaChangeTest extends TestCase
@@ -78,7 +79,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         // provides indirect proof that it's working through PTOSC.
         $this->expectException(\UnexpectedValueException::class);
         // HACK: Workaround Travis CI passthru return_var differences from local.
-        $this->expectExceptionCode(getenv('TRAVIS') ? 255 : 29);
+        $this->expectExceptionCode(29);
         $this->loadMigrationsFrom(__DIR__ . '/migrations/adds-without-default');
     }
 
@@ -95,7 +96,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-fk-with-index');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om_fk_with_index')
             )->{"Create Table"}
         );
@@ -116,7 +117,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/creates-index-with-raw-sql');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om')
             )->{"Create Table"}
         );
@@ -169,7 +170,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $this->loadMigrationsFrom(__DIR__ . '/migrations/drops-index-with-raw-sql');
 
         $show_create_sql = str_replace('`', '',
-            array_last(
+            Arr::last(
                 \DB::select('show create table test_om')
             )->{"Create Table"}
         );
