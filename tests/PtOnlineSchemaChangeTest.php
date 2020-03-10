@@ -12,6 +12,11 @@ class PtOnlineSchemaChangeTest extends TestCase
     // getting output from $this->artisan, Artisan::call, and console Kernel
     // aren't working yet, and loadMigrationsFrom is opaque.
 
+    protected function getEnvironmentSetUp($app)
+    {
+        $app['config']->set('online-migrator.ptosc-fold-table-case', 'lower');
+    }
+
     public function test_getOptionsForShell_overridesDefault()
     {
         $this->assertEquals(
@@ -25,6 +30,15 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $query_or_command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
         $this->assertEquals($query['query'], $query_or_command);
+    }
+
+    public function test_getQueryOrCommand_foldsTableCaseLower()
+    {
+        $query = ['query' => 'ALTER TABLE `myTable` ADD "c" INT'];
+
+        $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
+        $this->assertStringStartsWith('pt-online-schema-change', $command);
+        $this->assertContains(",t=mytable'", $command);
     }
 
     public function test_getQueryOrCommand_rewritesDropForeignKey()

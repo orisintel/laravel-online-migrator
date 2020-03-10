@@ -51,6 +51,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Percona Online Schema Change - Fold Table Case
+    |--------------------------------------------------------------------------
+    |
+    | Whether to force table case to 'upper' or 'lower'. Mysql can silently
+    | coerce case but PTOSC cannot.
+    |
+    */
+
+    'ptosc-fold-table-case' => env('PTOSC_FOLD_TABLE_CASE'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Register Doctrine Enum Type
     |--------------------------------------------------------------------------
     |
