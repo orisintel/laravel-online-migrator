@@ -191,6 +191,16 @@ final class PtOnlineSchemaChange implements StrategyInterface
             return $query['query'];
         }
 
+        $table_name_folded = $onlineable['table_name'];
+        switch(mb_strtolower(config('online-migrator.ptosc-fold-table-case'))) {
+            case 'upper':
+                $table_name_folded = mb_strtoupper($table_name_folded);
+                break;
+            case 'lower':
+                $table_name_folded = mb_strtolower($table_name_folded);
+                break;
+        }
+
         // Keeping defaults here so overriding one does not discard all, as
         // would happen if left to `config/online-migrator.php`.
         $ptosc_defaults = [
@@ -212,7 +222,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
         $db_config = $connection->getConfig();
         $command = 'pt-online-schema-change --alter '
             . escapeshellarg($onlineable['changes'])
-            . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $onlineable['table_name'])
+            . ' D=' . escapeshellarg($db_config['database'] . ',t=' . $table_name_folded)
             . ' --host ' . escapeshellarg($db_config['host'])
             . ' --port ' . escapeshellarg($db_config['port'])
             . ' --user ' . escapeshellarg($db_config['username'])
