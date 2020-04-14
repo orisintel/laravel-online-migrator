@@ -57,7 +57,7 @@ class PtOnlineSchemaChangeTest extends TestCase
         $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
         $this->assertStringStartsWith('pt-online-schema-change', $command);
         $this->assertStringContainsString("'DROP INDEX", $command);
-        $this->assertNotContains(' ON test ', $command);
+        $this->assertStringNotContainsString(' ON test ', $command);
     }
 
     public function test_getQueryOrCommand_supportsAnsiQuotes()
@@ -175,7 +175,7 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
         $this->assertCount(2, $converted);
-        $this->assertNotContains(", EXCHANGE PARTITION", $converted[0]['query']);
+        $this->assertStringNotContainsString(", EXCHANGE PARTITION", $converted[0]['query']);
     }
 
     public function test_migrate_dropsIndexWithSql()
@@ -189,6 +189,6 @@ class PtOnlineSchemaChangeTest extends TestCase
             )->{"Create Table"}
         );
 
-        $this->assertNotContains('FULLTEXT', $show_create_sql);
+        $this->assertStringNotContainsString('FULLTEXT', $show_create_sql);
     }
 }
