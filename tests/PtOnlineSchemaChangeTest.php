@@ -38,7 +38,7 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
         $this->assertStringStartsWith('pt-online-schema-change', $command);
-        $this->assertContains(",t=mytable'", $command);
+        $this->assertStringContainsString(",t=mytable'", $command);
     }
 
     public function test_getQueryOrCommand_rewritesDropForeignKey()
@@ -47,7 +47,7 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
         $this->assertStringStartsWith('pt-online-schema-change', $command);
-        $this->assertContains("'DROP FOREIGN KEY _fk, DROP FOREIGN KEY _fk2", $command);
+        $this->assertStringContainsString("'DROP FOREIGN KEY _fk, DROP FOREIGN KEY _fk2", $command);
     }
 
     public function test_getQueryOrCommand_rewritesDropIndex()
@@ -56,8 +56,8 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
         $this->assertStringStartsWith('pt-online-schema-change', $command);
-        $this->assertContains("'DROP INDEX", $command);
-        $this->assertNotContains(' ON test ', $command);
+        $this->assertStringContainsString("'DROP INDEX", $command);
+        $this->assertStringNotContainsString(' ON test ', $command);
     }
 
     public function test_getQueryOrCommand_supportsAnsiQuotes()
@@ -66,7 +66,7 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $command = PtOnlineSchemaChange::getQueryOrCommand($query, \DB::connection());
         $this->assertStringStartsWith('pt-online-schema-change', $command);
-        $this->assertContains("'ADD \"c\" INT, DROP \"c2\", DROP FOREIGN KEY \"_fk\"", $command);
+        $this->assertStringContainsString("'ADD \"c\" INT, DROP \"c2\", DROP FOREIGN KEY \"_fk\"", $command);
     }
 
     public function test_migrate_addsColumn()
@@ -136,7 +136,7 @@ class PtOnlineSchemaChangeTest extends TestCase
             )->{"Create Table"}
         );
 
-        $this->assertContains('FULLTEXT', $show_create_sql);
+        $this->assertStringContainsString('FULLTEXT', $show_create_sql);
     }
 
     public function test_migrate_createsTableWithPrimary()
@@ -162,8 +162,8 @@ class PtOnlineSchemaChangeTest extends TestCase
         $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
         $this->assertCount(2, $converted);
         $this->assertStringStartsWith('pt-online-schema-change', $converted[0]['query']);
-        $this->assertContains('ADD c INT, ALTER c2 SET DEFAULT 0, DROP c3, CHANGE c4 c4 TEXT', $converted[0]['query']);
-        $this->assertContains('ADD c INT, ADD c2 INT', $converted[1]['query']);
+        $this->assertStringContainsString('ADD c INT, ALTER c2 SET DEFAULT 0, DROP c3, CHANGE c4 c4 TEXT', $converted[0]['query']);
+        $this->assertStringContainsString('ADD c INT, ADD c2 INT', $converted[1]['query']);
     }
 
     public function test_migrate_doesNotCombineUnsupportedSql()
@@ -175,7 +175,7 @@ class PtOnlineSchemaChangeTest extends TestCase
 
         $converted = PtOnlineSchemaChange::getQueriesAndCommands($queries, \DB::connection());
         $this->assertCount(2, $converted);
-        $this->assertNotContains(", EXCHANGE PARTITION", $converted[0]['query']);
+        $this->assertStringNotContainsString(", EXCHANGE PARTITION", $converted[0]['query']);
     }
 
     public function test_migrate_dropsIndexWithSql()
@@ -189,6 +189,6 @@ class PtOnlineSchemaChangeTest extends TestCase
             )->{"Create Table"}
         );
 
-        $this->assertNotContains('FULLTEXT', $show_create_sql);
+        $this->assertStringNotContainsString('FULLTEXT', $show_create_sql);
     }
 }
