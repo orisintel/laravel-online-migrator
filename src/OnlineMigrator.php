@@ -169,6 +169,9 @@ class OnlineMigrator extends Migrator
             return false;
         }
 
-        return config('online-migrator.enabled') ? true : false;
+        // Default to enabled whenever package installed yet not explicitly
+        // enabled.
+        $config_enabled = config('online-migrator.enabled');
+        return 0 === strlen($config_enabled) || $config_enabled ? true : false;
     }
 }
