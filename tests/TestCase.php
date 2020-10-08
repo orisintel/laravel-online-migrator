@@ -9,8 +9,6 @@ class TestCase extends \Orchestra\Testbench\TestCase
     {
         parent::setUp();
 
-        // HACK: Workaround failing on Travis unless explicitly truthy.
-        $this->app['config']->set('online-migrator.enabled', '1');
         $this->loadMigrationsFrom(__DIR__ . '/migrations/setup');
     }
 
