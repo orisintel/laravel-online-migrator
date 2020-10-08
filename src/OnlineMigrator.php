@@ -172,7 +172,6 @@ class OnlineMigrator extends Migrator
         // Default to enabled whenever package installed yet not explicitly
         // enabled.
         $config_enabled = config('online-migrator.enabled');
-        if (getenv('TRAVIS')) fwrite(STDERR, "\nconfig_enabled='$config_enabled'\n");
         return 0 === strlen($config_enabled) || $config_enabled ? true : false;
     }
 }
