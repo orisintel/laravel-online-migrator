@@ -157,6 +157,7 @@ class OnlineMigrator extends Migrator
         // Allow overriding general config and `.env` when specified explicitly
         // from the CLI or phpunit.xml.
         $override = getenv('ONLINE_MIGRATOR'); // Don't use `env()`, it reads `.env`.
+        if (getenv('TRAVIS')) fwrite(STDERR, "\noverride='$override'\n");
         if (0 < strlen($override)) {
             return $override ? true : false;
         }
@@ -165,6 +166,7 @@ class OnlineMigrator extends Migrator
         // queries when migrating "test" database(s).
         // CONSIDER: Instead leveraging configurable blacklist or per-DB option.
         $is_test_database = (false !== stripos($db_name, 'test'));
+        if (getenv('TRAVIS')) fwrite(STDERR, "\nis_test_database='$is_test_database'\n");
         if ($is_test_database) {
             return false;
         }
@@ -172,6 +174,7 @@ class OnlineMigrator extends Migrator
         // Default to enabled whenever package installed yet not explicitly
         // enabled.
         $config_enabled = config('online-migrator.enabled');
+        if (getenv('TRAVIS')) fwrite(STDERR, "\nconfig_enabled='$config_enabled'\n");
         return 0 === strlen($config_enabled) || $config_enabled ? true : false;
     }
 }
