@@ -19,4 +19,10 @@ class ConfigTest extends TestCase
 
         $this->assertEquals('column added', \DB::table('test_om')->first()->without_default ?? null);
     }
+
+    public function tearDown(): void
+    {
+        // Reset to blank for later tests.
+        $this->app['config']->set('online-migrator.enabled', '');
+    }
 }

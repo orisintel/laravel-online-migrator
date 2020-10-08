@@ -24,5 +24,6 @@ class ConfigOverrideTest extends TestCase
     public function tearDown(): void
     {
         putenv('ONLINE_MIGRATOR=');
+        $this->app['config']->set('online-migrator.enabled', '');
     }
 }
