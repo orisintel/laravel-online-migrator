@@ -150,18 +150,28 @@ class OnlineMigrator extends Migrator
         // Traits on migrations themselves may rule out using this migrator.
         $is_online_compatible = (empty($migration->onlineIncompatibleMethods)
             || ! in_array($method, $migration->onlineIncompatibleMethods));
+        if (! $is_online_compatible) {
+            return false;
+        }
 
-        $use_flag_specified = (0 < strlen(config('online-migrator.enabled')));
+        // Allow overriding general config and `.env` when specified explicitly
+        // from the CLI or phpunit.xml.
+        $override = getenv('ONLINE_MIGRATOR'); // Don't use `env()`, it reads `.env`.
+        if (0 < strlen($override)) {
+            return $override ? true : false;
+        }
 
         // HACK: Work around slow and sometimes absent PTOSC by using original
         // queries when migrating "test" database(s).
         // CONSIDER: Instead leveraging configurable blacklist or per-DB option.
         $is_test_database = (false !== stripos($db_name, 'test'));
+        if ($is_test_database) {
+            return false;
+        }
 
-        $is_appropriate =
-            ($use_flag_specified ? config('online-migrator.enabled') : (false === $is_test_database))
-            && $is_online_compatible;
-
-        return $is_appropriate;
+        // Default to enabled whenever package installed yet not explicitly
+        // enabled.
+        $config_enabled = config('online-migrator.enabled');
+        return 0 === strlen($config_enabled) || $config_enabled ? true : false;
     }
 }
