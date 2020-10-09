@@ -24,5 +24,6 @@ class ConfigTest extends TestCase
     {
         // Reset to blank for later tests.
         $this->app['config']->set('online-migrator.enabled', '');
+        parent::tearDown();
     }
 }

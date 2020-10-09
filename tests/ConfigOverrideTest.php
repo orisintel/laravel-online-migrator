@@ -25,5 +25,6 @@ class ConfigOverrideTest extends TestCase
     {
         putenv('ONLINE_MIGRATOR=');
         $this->app['config']->set('online-migrator.enabled', '');
+        parent::tearDown();
     }
 }
