@@ -2,8 +2,6 @@ name: tests
 
 on:
     push:
-    schedule:
-        - cron: '0 0 * * *'
 
 jobs:
     styling:
@@ -28,46 +26,3 @@ jobs:
               with:
                   branch: ${{ github.head_ref }}
                   commit_message: Automatic application of php-cs-fixer changes
-    tests:
-        needs:
-            - styling
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: true
-            matrix:
-                php: [7.2, 7.3, 7.4]
-                stability: [prefer-lowest, prefer-stable]
-
-        name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
-
-        steps:
-            - name: Setup DB
-              uses: mirromutth/mysql-action@v1.1
-              with:
-                  mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
-                  mysql database: 'online_migrator_ci' # Optional, default value is "test". The specified database which will be create
-                  mysql root password: '' # Required if "mysql user" is empty, default is empty. The root superuser password
-                  mysql user: 'developer'
-                  mysql password: 'random'
-
-            - name: Checkout code
-              uses: actions/checkout@v2
-
-            - name: Cache dependencies
-              uses: actions/cache@v2
-              with:
-                  path: ~/.composer/cache/files
-                  key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php }}
-                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd
-                  coverage: none
-
-            - name: Install dependencies
-              run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
-
-            - name: Execute tests
-              run: vendor/bin/phpunit --testdox
