@@ -42,13 +42,12 @@ jobs:
 
         steps:
             - name: Setup DB
-              run: mysql -e 'CREATE DATABASE online_migrator_ci;'
-            - name: Get percona deb
-              run: wget https://repo.percona.com/apt/percona-release_latest.bionic_all.deb
-            - name: Install percona deb
-              run: sudo dpkg -i percona-release_latest.bionic_all.deb
-            - name: Install toolkit
-              run: sudo apt-get update && sudo apt-get install -y percona-toolkit
+              uses: mirromutth/mysql-action@v1.1
+              with:
+                  mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
+                  mysql database: 'online_migrator_ci' # Optional, default value is "test". The specified database which will be create
+                  mysql root password: '' # Required if "mysql user" is empty, default is empty. The root superuser password
+
             - name: Checkout code
               uses: actions/checkout@v2
 
