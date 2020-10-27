@@ -41,6 +41,14 @@ jobs:
         name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
 
         steps:
+            - name: Setup DB
+              run: mysql -e 'CREATE DATABASE online_migrator_ci;'
+            - name: Get percona deb
+              run: wget https://repo.percona.com/apt/percona-release_latest.bionic_all.deb
+            - name: Install percona deb
+              run: sudo dpkg -i percona-release_latest.bionic_all.deb
+            - name: Install toolkit
+              run: sudo apt-get update && sudo apt-get install -y percona-toolkit
             - name: Checkout code
               uses: actions/checkout@v2
 
