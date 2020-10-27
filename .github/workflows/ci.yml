@@ -1,0 +1,64 @@
+name: tests
+
+on:
+    push:
+    schedule:
+        - cron: '0 0 * * *'
+
+jobs:
+    styling:
+        name: PHP-CS-Fixer
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout branch
+              if: github.ref != 'refs/heads/master'
+              uses: actions/checkout@v2
+            - name: Cache .php_cs.cache
+              if: github.ref != 'refs/heads/master'
+              uses: actions/cache@v2
+              with:
+                  path: ./.php_cs.cache
+                  key: php-cs-cache
+            - name: Run php-cs-fixer
+              if: github.ref != 'refs/heads/master'
+              uses: docker://oskarstark/php-cs-fixer-ga
+            - name: Apply fixes
+              if: github.ref != 'refs/heads/master'
+              uses: stefanzweifel/git-auto-commit-action@v4.0.0
+              with:
+                  branch: ${{ github.head_ref }}
+                  commit_message: Automatic application of php-cs-fixer changes
+    tests:
+        needs:
+            - styling
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: true
+            matrix:
+                php: [7.2, 7.3, 7.4]
+                stability: [prefer-lowest, prefer-stable]
+
+        name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Cache dependencies
+              uses: actions/cache@v2
+              with:
+                  path: ~/.composer/cache/files
+                  key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php }}
+                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd
+                  coverage: none
+
+            - name: Install dependencies
+              run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+            - name: Execute tests
+              run: vendor/bin/phpunit --testdox
