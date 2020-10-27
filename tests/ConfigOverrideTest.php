@@ -2,7 +2,6 @@
 
 namespace OrisIntel\OnlineMigrator\Tests;
 
-
 class ConfigOverrideTest extends TestCase
 {
     protected function getEnvironmentSetUp($app)

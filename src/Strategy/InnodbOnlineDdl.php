@@ -48,6 +48,7 @@ final class InnodbOnlineDdl implements StrategyInterface
             . '((UNIQUE|FULLTEXT|SPATIAL)\s+)?'
             . 'INDEX\s+`?[^`\s]+`?\s+ON\s+`?([^\s`]+)`?/imu';
         $drop_re = '/\A\s*DROP\s+INDEX\s+`?[^`\s]+`?\s+ON\s+`?([^`\s]+)`?/imu';
+
         if (preg_match($alter_re, $query_or_command_str, $alter_parts)
             || preg_match($create_re, $query_or_command_str, $create_parts)
             || preg_match($drop_re, $query_or_command_str, $drop_parts)
@@ -74,6 +75,7 @@ final class InnodbOnlineDdl implements StrategyInterface
             // per migration.
             // CONSIDER: Falling back to 'COPY' if 'INPLACE' is stopped.
             $algorithm = null;
+
             if (! preg_match('/[\s,]\s*ALGORITHM\s*=\s*([^\s]+)/imu', $query_or_command_str, $algo_parts)) {
                 $algorithm = static::isInplaceCompatible($query_or_command_str, $connection)
                     ? 'INPLACE' : 'COPY';
@@ -103,6 +105,7 @@ final class InnodbOnlineDdl implements StrategyInterface
         // CONSIDER: Automatically setting foreign_key_checks=OFF, then back ON.
         if (preg_match('/\bFOREIGN\s+KEY\b/imu', $query_str)) {
             $foreign_key_checks = $connection->select('SELECT @@FOREIGN_KEY_CHECKS')[0]->{'@@FOREIGN_KEY_CHECKS'};
+
             if (1 === $foreign_key_checks) {
                 return false;
             }

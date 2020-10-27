@@ -2,7 +2,6 @@
 
 namespace OrisIntel\OnlineMigrator\Tests;
 
-
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +17,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
             ->where('table_schema', '=', DB::getDatabaseName())
             ->pluck('TABLE_NAME');
         Schema::disableForeignKeyConstraints();
+
         foreach ($table_names as $table_name) {
             Schema::drop($table_name);
         }
