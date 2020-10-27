@@ -47,6 +47,7 @@ jobs:
                   mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
                   mysql database: 'online_migrator_ci' # Optional, default value is "test". The specified database which will be create
                   mysql root password: '' # Required if "mysql user" is empty, default is empty. The root superuser password
+                  mysql user: 'developer'
 
             - name: Checkout code
               uses: actions/checkout@v2
