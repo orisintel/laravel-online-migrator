@@ -48,6 +48,7 @@ jobs:
                   mysql database: 'online_migrator_ci' # Optional, default value is "test". The specified database which will be create
                   mysql root password: '' # Required if "mysql user" is empty, default is empty. The root superuser password
                   mysql user: 'developer'
+                  mysql password: 'random'
 
             - name: Checkout code
               uses: actions/checkout@v2
