@@ -110,6 +110,7 @@ class OnlineMigrator extends Migrator
         // CONSIDER: Emitting warning if $this->getSchemaGrammar($connection)->supportsSchemaTransactions().
 
         $strategy = self::getStrategy($migration);
+
         foreach ($queries as &$query) {
             $strategy::runQueryOrCommand($query, $connection);
         }
@@ -131,6 +132,7 @@ class OnlineMigrator extends Migrator
         // CONSIDER: Moving to separate package since this isn't directly
         // related to online migrations.
         $enum_mapping = config('online-migrator.doctrine-enum-mapping');
+
         if ($enum_mapping) {
             $db->getDoctrineSchemaManager()
                 ->getDatabasePlatform()
@@ -150,6 +152,7 @@ class OnlineMigrator extends Migrator
         // Traits on migrations themselves may rule out using this migrator.
         $is_online_compatible = (empty($migration->onlineIncompatibleMethods)
             || ! in_array($method, $migration->onlineIncompatibleMethods));
+
         if (! $is_online_compatible) {
             return false;
         }
@@ -157,6 +160,7 @@ class OnlineMigrator extends Migrator
         // Allow overriding general config and `.env` when specified explicitly
         // from the CLI or phpunit.xml.
         $override = getenv('ONLINE_MIGRATOR'); // Don't use `env()`, it reads `.env`.
+
         if (0 < strlen($override)) {
             return $override ? true : false;
         }
@@ -165,6 +169,7 @@ class OnlineMigrator extends Migrator
         // queries when migrating "test" database(s).
         // CONSIDER: Instead leveraging configurable blacklist or per-DB option.
         $is_test_database = (false !== stripos($db_name, 'test'));
+
         if ($is_test_database) {
             return false;
         }
@@ -172,6 +177,7 @@ class OnlineMigrator extends Migrator
         // Default to enabled whenever package installed yet not explicitly
         // enabled.
         $config_enabled = config('online-migrator.enabled');
+
         return 0 === strlen($config_enabled) || $config_enabled ? true : false;
     }
 }
