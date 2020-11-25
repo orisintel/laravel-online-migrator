@@ -30,7 +30,7 @@ jobs:
       - name: Install Percona Toolkit
         run: sudo apt-get install -y -qq percona-toolkit
       - name: Workaround outdated PTOSC validation
-        run: sudo sed -i -r -e 's/^([ \t]*if \()(\\$vp->cmp\()/\1 0 && \2/g' /usr/bin/pt-online-schema-change
+        run: sudo sed -i -r -e 's/^([ \t]*if \()(\$vp->cmp\()/\1 0 \&\& \2/g' /usr/bin/pt-online-schema-change
       - name: Start Mysql
         run: sudo systemctl start mysql
       - name: Create Mysql DB
