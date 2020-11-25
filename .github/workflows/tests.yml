@@ -24,7 +24,7 @@ jobs:
           path: ~/.composer/cache/files
           key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
       - name: Create Mysql DB
-        run: mysql --user=root --password=root -e 'CREATE DATABASE IF NOT EXISTS online_migrator_ci;'
+        run: mysql --user=root --password=root --host=127.0.0.1 -e 'CREATE DATABASE IF NOT EXISTS online_migrator_ci;'
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
