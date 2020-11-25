@@ -5,7 +5,7 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       fail-fast: true
@@ -23,6 +23,8 @@ jobs:
         with:
           path: ~/.composer/cache/files
           key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+      - name: Create Mysql DB
+        run: mysql --user=root --password=root -e 'CREATE DATABASE IF NOT EXISTS online_migrator_ci;'
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -31,4 +33,4 @@ jobs:
       - name: Composer update
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
       - name: Execute tests
-        run: vendor/bin/phpunit --testdox
+        run: vendor/bin/phpunit --testdox --configuration phpunit.xml.github
