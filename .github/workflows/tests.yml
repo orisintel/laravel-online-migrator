@@ -1,0 +1,49 @@
+name: tests
+
+on:
+  push:
+
+jobs:
+  tests:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [7.3, 7.4]
+        stability: [prefer-lowest, prefer-stable]
+
+    name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+      - name: Download Percona Repo
+        run: wget --quiet https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+      - name: Install Percona Repo
+        run: sudo dpkg -i percona-release_latest.generic_all.deb
+      - name: Install Percona Toolkit
+        run: sudo apt-get install -y -qq percona-toolkit
+      - name: Workaround outdated PTOSC validation
+        run: sudo sed -i -r -e 's/^([ \t]*if \()(\$vp->cmp\()/\1 0 \&\& \2/g' /usr/bin/pt-online-schema-change
+      - name: Start Mysql
+        run: sudo systemctl start mysql
+      - name: Create Mysql DB
+        run: mysql --user=root --password=root --host=127.0.0.1 -e 'CREATE DATABASE IF NOT EXISTS online_migrator_ci;'
+      - name: Workaround PHP 7.3 not supporting newer authentication
+        run: mysql --user=root --password=root --host=127.0.0.1 -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root'; FLUSH PRIVILEGES;"
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_mysql
+          coverage: none
+      - name: Composer update
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+      - name: Execute tests
+        run: vendor/bin/phpunit --testdox --configuration phpunit.xml.github

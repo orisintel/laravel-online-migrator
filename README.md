@@ -135,7 +135,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 ## Security
 
 If you discover any security related issues, please email
-opensource@orisintel.com instead of using the issue tracker.
+opensource@pricespider.com instead of using the issue tracker.
 
 ## Credits
 
