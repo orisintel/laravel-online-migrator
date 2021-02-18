@@ -205,7 +205,6 @@ final class PtOnlineSchemaChange implements StrategyInterface
         // would happen if left to `config/online-migrator.php`.
         $ptosc_defaults = [
             '--alter-foreign-keys-method=auto',
-            '--no-check-alter', // ASSUMES: Users accept risks w/RENAME.
             // ASSUMES: All are known to be unique.
             // CONSIDER: Extracting/re-creating automatic uniqueness checks
             // and running them here in PHP beforehand.
