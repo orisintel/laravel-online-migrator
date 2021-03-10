@@ -2,7 +2,7 @@
 
 namespace OrisIntel\OnlineMigrator\Tests;
 
-class StrategyTrait extends TestCase
+class StrategyTraitTest extends TestCase
 {
     public function setUp() : void
     {

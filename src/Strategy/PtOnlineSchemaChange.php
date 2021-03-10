@@ -3,7 +3,7 @@
  * Created by PhpStorm.
  * User: progers
  * Date: 9/12/18
- * Time: 3:25 PM
+ * Time: 3:25 PM.
  */
 
 namespace OrisIntel\OnlineMigrator\Strategy;
@@ -23,10 +23,11 @@ final class PtOnlineSchemaChange implements StrategyInterface
      */
     public static function getQueriesAndCommands(array &$queries, Connection $connection, bool $combineIncompatible = false) : array
     {
-        /*** @var array like ['table_name' => string, 'changes' => array]. */
+        /* @var array like ['table_name' => string, 'changes' => array]. */
         $combining = [];
 
         $queries_commands = [];
+
         foreach ($queries as &$query) {
             if (
                 ! $combineIncompatible
@@ -35,20 +36,23 @@ final class PtOnlineSchemaChange implements StrategyInterface
                 // First adjacent combinable.
                 if (empty($combining)) {
                     $combining = $combinable;
+
                     continue;
                 }
 
                 // Same table, so combine changes into comma-separated string.
                 if ($combining['table_name'] === $combinable['table_name']) {
                     $combining['changes'] =
-                        (!empty($combining['changes']) ? $combining['changes'] . ', ' : '')
+                        (! empty($combining['changes']) ? $combining['changes'] . ', ' : '')
                         . $combinable['changes'];
+
                     continue;
                 }
 
                 // Different table, so store previous combinables and reset.
                 $queries_commands[] = self::getCombinedWithBindings($combining, $connection);
                 $combining = $combinable;
+
                 continue;
             }
 
@@ -71,7 +75,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
     }
 
     /**
-     * @param array      $combining like ['table_name' => string, 'changes' => string]
+     * @param array      $combining  like ['table_name' => string, 'changes' => string]
      * @param Connection $connection
      *
      * @return array like ['query' => string, 'binding' => array, 'time' => float].
@@ -79,9 +83,9 @@ final class PtOnlineSchemaChange implements StrategyInterface
     private static function getCombinedWithBindings(array $combining, Connection $connection) : array
     {
         $query_bindings_time = [
-            'query' => "ALTER TABLE $combining[escape]$combining[table_name]$combining[escape] $combining[changes]",
+            'query'    => "ALTER TABLE $combining[escape]$combining[table_name]$combining[escape] $combining[changes]",
             'bindings' => [],
-            'time' => 0.0,
+            'time'     => 0.0,
         ];
         $query_bindings_time['query'] = self::getQueryOrCommand($query_bindings_time, $connection);
 
@@ -125,6 +129,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
             . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+([`"]?[^`"\s]+[`"]?)\s+?/imu';
         $drop_re = '/\A\s*DROP\s+'
             . 'INDEX\s+[`"]?([^`"\s]+)[`"]?\s+ON\s+([`"]?[^`"\s]+[`"]?)\s*?/imu';
+
         if (preg_match($alter_re, $query_string, $alter_parts)) {
             $table_name = $alter_parts[1];
             // Changing query so pretendToRun output will match command.
@@ -164,8 +169,8 @@ final class PtOnlineSchemaChange implements StrategyInterface
 
         return [
             'table_name' => $table_name,
-            'changes' => $changes,
-            'escape' => $escape,
+            'changes'    => $changes,
+            'escape'     => $escape,
         ];
     }
 
@@ -192,10 +197,12 @@ final class PtOnlineSchemaChange implements StrategyInterface
         }
 
         $table_name_folded = $onlineable['table_name'];
-        switch(mb_strtolower(config('online-migrator.ptosc-fold-table-case'))) {
+
+        switch (mb_strtolower(config('online-migrator.ptosc-fold-table-case'))) {
             case 'upper':
                 $table_name_folded = mb_strtoupper($table_name_folded);
                 break;
+
             case 'lower':
                 $table_name_folded = mb_strtolower($table_name_folded);
                 break;
@@ -250,6 +257,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
         $return = '';
 
         $options = [];
+
         foreach ($defaults as $raw_default) { // CONSIDER: Accepting value
             if (false === strpos($raw_default, '--', 0)) {
                 throw new \InvalidArgumentException(
@@ -264,6 +272,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
             // CONSIDER: Formatting CLI options in config as native arrays
             // instead of CSV.
             $raw_options = preg_split('/[, ]+(?=--)/', $option_csv);
+
             foreach ($raw_options as $raw_option) {
                 if (false === strpos($raw_option, '--', 0)) {
                     throw new \InvalidArgumentException(
@@ -305,6 +314,7 @@ final class PtOnlineSchemaChange implements StrategyInterface
             // Pass-through output instead of capturing since delay until end of
             // command may be infinite during prompt or too late to correct.
             passthru($command, $return_var);
+
             if (0 !== $return_var) {
                 throw new \UnexpectedValueException('Exited with error code '
                     . var_export($return_var, 1) . ', command:' . PHP_EOL

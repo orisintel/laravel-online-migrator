@@ -2,7 +2,6 @@
 
 namespace OrisIntel\OnlineMigrator\Tests;
 
-
 use Illuminate\Support\Arr;
 use OrisIntel\OnlineMigrator\Strategy\PtOnlineSchemaChange;
 
